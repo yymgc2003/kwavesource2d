@@ -7,12 +7,12 @@ DATA_CAST = 'gpuArray-single';
 % -------------------------------------------------------------------------
 % 1) シミュレーション用グリッドの定義
 % -------------------------------------------------------------------------
-Nx = 256;               % x方向グリッド数 (行方向)
-Ny = 256;               % y方向グリッド数 (列方向)
+Nx = 1024;               % x方向グリッド数 (行方向)
+Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '/home/matsubara/Scripts/tmp';
+save_path = '//mnt/matsubara/movies';
 
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
@@ -32,14 +32,15 @@ glass.density     = 2500;      % [kg/m^3] ガラスの密度
 % 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(50:100, Ny/2-70) = 1;
+source.p_mask(50:100, Ny/2-500) = 1;
 
-% 垂直なガラス層のマスク（中央に配置）
+
 glass_mask = zeros(Nx, Ny);
-glass_thickness = 10;  % ガラスの厚さ（グリッド数）
-glass_center = Nx/2 + 40;   % ガラスの中心位置
-glass_mask(:, glass_center-glass_thickness/2:glass_center+glass_thickness/2) = 1;
-
+glass_thickness = 30;  % ガラスの厚さ（グリッド数）
+glass_center_first = Ny/2 ;   % ガラスの中心位置
+glass_center_second = Ny/2 + 300;   % ガラスの中心位置
+glass_mask(:, glass_center_first-glass_thickness/2:glass_center_first+glass_thickness/2) = 1;
+glass_mask(:, glass_center_second-glass_thickness/2:glass_center_second+glass_thickness/2) = 1;
 
 medium.sound_speed = 1500 * ones(Nx, Ny);
 medium.density     = 1000 * ones(Nx, Ny);
@@ -50,7 +51,7 @@ medium.density(glass_mask == 1) = glass.density;
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-3;
+t_end = 1e-1;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -83,7 +84,7 @@ source.p = source_signal;
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny);
 sensor_x = Nx/2;
-sensor_y = Ny/2 - 70;
+sensor_y = Ny/2 + 100;
 sensor.mask(sensor_x, sensor_y) = 1;
 sensor.record = {'p'};
 
@@ -100,7 +101,7 @@ input_args = {
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
+sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 %p_all = sensor_data.field;
 %save('data.mat','p_all','-v7.3');
 % -------------------------------------------------------------------------
@@ -112,3 +113,5 @@ xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vertical glass layer');
 saveas(gcf, fullfile(save_path, 'sensor_glass_vertical.png')); 
+sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
+save(fullfile(save_path, 'sensor_data.mat'), 'sensor_data_cpu', '-v7.3');
