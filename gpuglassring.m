@@ -60,7 +60,7 @@ medium.density(glass_mask == 1) = glass.density;
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-4; % longer than 1e-3 period simulation result in too long computational time. for movie visualization, 0.1ms simulation time is enough
+t_end = 1e-2;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -93,7 +93,7 @@ source.p = source_signal;
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny);
 sensor_x = Nx/2;
-sensor_y = Ny/2 + 80;
+sensor_y = Ny/2 + 200;
 sensor.mask(sensor_x, sensor_y) = 1;
 sensor.record = {'p'};
 
@@ -110,7 +110,7 @@ input_args = {
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
+sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
@@ -120,4 +120,4 @@ plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with glass ring');
-saveas(gcf, fullfile(save_path, 'sensor_glass_ring.png')); 
+saveas(gcf, fullfile(save_path, 'gpu_glass_ring.png'));
