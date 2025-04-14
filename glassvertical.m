@@ -101,7 +101,7 @@ input_args = {
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
+sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
 %p_all = sensor_data.field;
 %save('data.mat','p_all','-v7.3');
 % -------------------------------------------------------------------------

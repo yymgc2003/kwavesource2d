@@ -1,10 +1,10 @@
 % =========================================================================
-% 2D k-Wave simulation with a focusing arc transducer and glass ring
+% 2D k-Wave simulation with a focusing arc transducer and vertical glass layer
 % =========================================================================
 clearvars;
 close all;
 DATA_CAST = 'gpuArray-single';
-gpuDevice(2);
+gpuDevice(1);
 % -------------------------------------------------------------------------
 % 1) シミュレーション用グリッドの定義
 % -------------------------------------------------------------------------
@@ -13,7 +13,7 @@ Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '/mnt/sdb/matsubara/tmp';
+save_path = '//mnt/matsubara/movies';
 
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
@@ -30,38 +30,29 @@ glass.sound_speed = 5500;      % [m/s] ガラスの音速
 glass.density     = 2500;      % [kg/m^3] ガラスの密度
 
 % -------------------------------------------------------------------------
-% 3) ソースとガラス円環のマスクを作成
+% 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(Nx/2-10:Nx/2+10, Ny/2-500) = 1;
+source.p_mask(50:100, Ny/2-500) = 1;
 
-% ガラス円環のマスクを作成
-%glass_mask = zeros(Nx, Ny);
-center_x = Nx/2-70;
-center_y = Ny/2;
-outer_radius = 160;  % 外側の半径
-inner_radius = 130;   % 内側の半径
-thickness = outer_radius - inner_radius;
 
-% 円環のマスクを作成
-[X, Y] = meshgrid(1:Nx, 1:Ny);
-X = X - center_x;
-Y = Y - center_y;
-R = sqrt(X.^2 + Y.^2);
-glass_mask = (R <= outer_radius) & (R >= inner_radius);
+glass_mask = zeros(Nx, Ny);
+glass_thickness = 30;  % ガラスの厚さ（グリッド数）
+glass_center_first = Ny/2 ;   % ガラスの中心位置
+glass_center_second = Ny/2 + 300;   % ガラスの中心位置
+glass_mask(:, glass_center_first-glass_thickness/2:glass_center_first+glass_thickness/2) = 1;
+glass_mask(:, glass_center_second-glass_thickness/2:glass_center_second+glass_thickness/2) = 1;
 
-% 媒質パラメータのマスクを作成
-medium.sound_speed = medium.sound_speed * ones(Nx, Ny);
-medium.density = medium.density * ones(Nx, Ny);
-
-% ガラス円環のパラメータを設定
+medium.sound_speed = 1500 * ones(Nx, Ny);
+medium.density     = 1000 * ones(Nx, Ny);
+% ガラス層のパラメータを設定
 medium.sound_speed(glass_mask == 1) = glass.sound_speed;
 medium.density(glass_mask == 1) = glass.density;
 
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-3;
+t_end = 1e-1;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -94,7 +85,7 @@ source.p = source_signal;
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny);
 sensor_x = Nx/2;
-sensor_y = Ny/2 + 200;
+sensor_y = Ny/2 + 100;
 sensor.mask(sensor_x, sensor_y) = 1;
 sensor.record = {'p'};
 
@@ -104,7 +95,7 @@ sensor.record = {'p'};
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'glassring_exp.avi'), ...
+    'MovieName', fullfile(save_path, 'glassvertical_real.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
@@ -112,7 +103,8 @@ input_args = {
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
 sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
-
+%p_all = sensor_data.field;
+%save('data.mat','p_all','-v7.3');
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
@@ -120,5 +112,7 @@ figure;
 plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
-title('Pressure at the sensor with glass ring');
-saveas(gcf, fullfile(save_path, 'gpu_glass_ring.png'));
+title('Pressure at the sensor with vertical glass layer');
+saveas(gcf, fullfile(save_path, 'sensor_glass_vertical.png')); 
+sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
+save(fullfile(save_path, 'sensor_data.mat'), 'sensor_data_cpu', '-v7.3');
