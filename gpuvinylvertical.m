@@ -1,5 +1,5 @@
 % =========================================================================
-% 2D k-Wave simulation with a focusing arc transducer and glass ring
+% 2D k-Wave simulation with a focusing arc transducer and vertical glass layer
 % =========================================================================
 clearvars;
 close all;
@@ -24,44 +24,34 @@ medium.density     = 1000;     % [kg/m^3]
 %medium.alpha_power = 1.0;
 %medium.alpha_mode  = 'no_dispersion';
 
-% ガラスのパラメータ
+% 塩ビ管のパラメータ
 vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
 vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
 % -------------------------------------------------------------------------
-% 3) ソースとガラス円環のマスクを作成
+% 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(Nx/2-10:Nx/2+10, Ny/2-distance_pipe_source/dy) = 1;
+source.p_mask(500:520, Ny/2-distance_pipe_source/dy) = 1;
 
-% ガラス円環のマスクを作成
-%glass_mask = zeros(Nx, Ny);
-center_x = Nx/2+160;
-center_y = Ny/2;
-outer_radius = 160;  % 外側の半径
-inner_radius = 130;   % 内側の半径
-thickness = outer_radius - inner_radius;
 
-% 円環のマスクを作成
-[X, Y] = meshgrid(1:Nx, 1:Ny);
-X = X - center_x;
-Y = Y - center_y;
-R = sqrt(X.^2 + Y.^2);
-pipe_mask = (R <= outer_radius) & (R >= inner_radius);
+pipe_mask = zeros(Nx, Ny);
+pipe_thickness = 30;  % ガラスの厚さ（グリッド数）
+pipe_center_first = Ny/2 ;   % ガラスの中心位置
+pipe_center_second = Ny/2 + 300;   % ガラスの中心位置
+pipe_mask(:, pipe_center_first-pipe_thickness/2:pipe_center_first+pipe_thickness/2) = 1;
+pipe_mask(:, pipe_center_second-pipe_thickness/2:pipe_center_second+pipe_thickness/2) = 1;
 
-% 媒質パラメータのマスクを作成
-medium.sound_speed = medium.sound_speed * ones(Nx, Ny);
-medium.density = medium.density * ones(Nx, Ny);
-
-% ガラス円環のパラメータを設定
+medium.sound_speed = 1500 * ones(Nx, Ny);
+medium.density     = 1000 * ones(Nx, Ny);
 medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
 medium.density(pipe_mask == 1) = vinyl.density;
 
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-4; % longer than 1e-3 period simulation result in too long computational time. for movie visualization, 0.1ms simulation time is enough
+t_end = 1e-3;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -103,16 +93,15 @@ sensor.record = {'p'};
 % -------------------------------------------------------------------------
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
-    'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'vinylpipe_exp.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
-
+sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
+%p_all = sensor_data.field;
+%save('data.mat','p_all','-v7.3');
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
@@ -120,10 +109,7 @@ figure;
 plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
-title('Pressure at the sensor with vinyl pipe');
-saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe.png')); 
-% kspaceFirstOrder2D実行後にGPU配列をCPUに集約
+title('Pressure at the sensor with vertical vinyl layer');
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_vertical.png')); 
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
-
-% v7.3 形式で.matファイル保存
-save(fullfile(save_path, 'sensor_data_pipe.mat'), 'sensor_data_cpu', '-v7.3');
+save(fullfile(save_path, 'sensor_data_vertical.mat'), 'sensor_data_cpu', '-v7.3');

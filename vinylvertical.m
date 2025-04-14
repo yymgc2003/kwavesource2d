@@ -94,7 +94,7 @@ sensor.record = {'p'};
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'glassvertical_real.avi'), ...
+    'MovieName', fullfile(save_path, 'vinylvertical_real.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
@@ -111,7 +111,7 @@ figure;
 plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
-title('Pressure at the sensor with vertical glass layer');
+title('Pressure at the sensor with vertical vinyl layer');
 saveas(gcf, fullfile(save_path, 'sensor_vinyl_vertical.png')); 
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
 save(fullfile(save_path, 'sensor_data_vertical.mat'), 'sensor_data_cpu', '-v7.3');

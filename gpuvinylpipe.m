@@ -61,7 +61,7 @@ medium.density(pipe_mask == 1) = vinyl.density;
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-4; % longer than 1e-3 period simulation result in too long computational time. for movie visualization, 0.1ms simulation time is enough
+t_end = 1e-3; % longer than 1e-3 period simulation result in too long computational time. for movie visualization, 0.1ms simulation time is enough
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -103,15 +103,13 @@ sensor.record = {'p'};
 % -------------------------------------------------------------------------
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
-    'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'vinylpipe_exp.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
+sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
