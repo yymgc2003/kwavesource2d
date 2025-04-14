@@ -12,8 +12,8 @@ Ny = 256;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '//mnt/matsubara/movies';
-
+% save_path = '//mnt/matsubara/movies'; % for dl-box
+save_path = '/mnt/matsubara/rawdata' % for jacob
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
 % -------------------------------------------------------------------------

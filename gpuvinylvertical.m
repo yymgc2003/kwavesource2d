@@ -12,8 +12,8 @@ Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '/mnt/sdb/matsubara/tmp';
-
+%save_path = '/mnt/sdb/matsubara/tmp'; % for dl-box
+save_path = '/mnt/matsubara/rawdata' % for jacob
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
 % -------------------------------------------------------------------------
@@ -107,6 +107,7 @@ sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 % -------------------------------------------------------------------------
 figure;
 plot(kgrid.t_array*1e3, sensor_data.p(1, :));
+xticks(0:0.1:1.0);
 xlabel('Time [ms]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vertical vinyl layer');
