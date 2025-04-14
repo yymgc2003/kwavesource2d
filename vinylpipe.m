@@ -25,18 +25,19 @@ medium.density     = 1000;     % [kg/m^3]
 %medium.alpha_mode  = 'no_dispersion';
 
 % ガラスのパラメータ
-glass.sound_speed = 5500;      % [m/s] ガラスの音速
-glass.density     = 2500;      % [kg/m^3] ガラスの密度
+vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
+vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
 
+distance_pipe_source = 0.05; % [m] distance between glass and source
 % -------------------------------------------------------------------------
 % 3) ソースとガラス円環のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(Nx/2-10:Nx/2+10, Ny/2-500) = 1;
+source.p_mask(Nx/2-10:Nx/2+10, Ny/2-distance_pipe_source/dy) = 1;
 
 % ガラス円環のマスクを作成
 %glass_mask = zeros(Nx, Ny);
-center_x = Nx/2-70;
+center_x = Nx/2+160;
 center_y = Ny/2;
 outer_radius = 160;  % 外側の半径
 inner_radius = 130;   % 内側の半径
@@ -47,15 +48,15 @@ thickness = outer_radius - inner_radius;
 X = X - center_x;
 Y = Y - center_y;
 R = sqrt(X.^2 + Y.^2);
-glass_mask = (R <= outer_radius) & (R >= inner_radius);
+pipe_mask = (R <= outer_radius) & (R >= inner_radius);
 
 % 媒質パラメータのマスクを作成
 medium.sound_speed = medium.sound_speed * ones(Nx, Ny);
 medium.density = medium.density * ones(Nx, Ny);
 
 % ガラス円環のパラメータを設定
-medium.sound_speed(glass_mask == 1) = glass.sound_speed;
-medium.density(glass_mask == 1) = glass.density;
+medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
+medium.density(pipe_mask == 1) = vinyl.density;
 
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
@@ -93,7 +94,7 @@ source.p = source_signal;
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny);
 sensor_x = Nx/2;
-sensor_y = Ny/2 + 80;
+sensor_y = Ny/2 + 400;
 sensor.mask(sensor_x, sensor_y) = 1;
 sensor.record = {'p'};
 
@@ -103,7 +104,7 @@ sensor.record = {'p'};
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'glassring_exp.avi'), ...
+    'MovieName', fullfile(save_path, 'vinylpipe_exp.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
@@ -120,4 +121,9 @@ plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with glass ring');
-saveas(gcf, fullfile(save_path, 'sensor_glass_ring.png')); 
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe.png')); 
+% kspaceFirstOrder2D実行後にGPU配列をCPUに集約
+sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
+
+% v7.3 形式で.matファイル保存
+save(fullfile(save_path, 'sensor_data_pipe.mat'), 'sensor_data_cpu', '-v7.3');

@@ -12,7 +12,7 @@ Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '//mnt/matsubara/movies';
+save_path = '/mnt/sdb/matsubara/tmp';
 
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
@@ -24,34 +24,34 @@ medium.density     = 1000;     % [kg/m^3]
 %medium.alpha_power = 1.0;
 %medium.alpha_mode  = 'no_dispersion';
 
-% ガラスのパラメータ
-glass.sound_speed = 5500;      % [m/s] ガラスの音速
-glass.density     = 2500;      % [kg/m^3] ガラスの密度
+% 塩ビ管のパラメータ
+vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
+vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
 
+distance_pipe_source = 0.05; % [m] distance between glass and source
 % -------------------------------------------------------------------------
 % 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(50:100, Ny/2-500) = 1;
+source.p_mask(500:520, Ny/2-distance_pipe_source/dy) = 1;
 
 
-glass_mask = zeros(Nx, Ny);
-glass_thickness = 30;  % ガラスの厚さ（グリッド数）
-glass_center_first = Ny/2 ;   % ガラスの中心位置
-glass_center_second = Ny/2 + 300;   % ガラスの中心位置
-glass_mask(:, glass_center_first-glass_thickness/2:glass_center_first+glass_thickness/2) = 1;
-glass_mask(:, glass_center_second-glass_thickness/2:glass_center_second+glass_thickness/2) = 1;
+pipe_mask = zeros(Nx, Ny);
+pipe_thickness = 30;  % ガラスの厚さ（グリッド数）
+pipe_center_first = Ny/2 ;   % ガラスの中心位置
+pipe_center_second = Ny/2 + 300;   % ガラスの中心位置
+pipe_mask(:, pipe_center_first-pipe_thickness/2:pipe_center_first+pipe_thickness/2) = 1;
+pipe_mask(:, pipe_center_second-pipe_thickness/2:pipe_center_second+pipe_thickness/2) = 1;
 
 medium.sound_speed = 1500 * ones(Nx, Ny);
 medium.density     = 1000 * ones(Nx, Ny);
-% ガラス層のパラメータを設定
-medium.sound_speed(glass_mask == 1) = glass.sound_speed;
-medium.density(glass_mask == 1) = glass.density;
+medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
+medium.density(pipe_mask == 1) = vinyl.density;
 
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-1;
+t_end = 1e-4;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -84,7 +84,7 @@ source.p = source_signal;
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny);
 sensor_x = Nx/2;
-sensor_y = Ny/2 + 100;
+sensor_y = Ny/2 + 400;
 sensor.mask(sensor_x, sensor_y) = 1;
 sensor.record = {'p'};
 
@@ -112,6 +112,6 @@ plot(kgrid.t_array*1e6, sensor_data.p(1, :));
 xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vertical glass layer');
-saveas(gcf, fullfile(save_path, 'sensor_glass_vertical.png')); 
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_vertical.png')); 
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
-save(fullfile(save_path, 'sensor_data.mat'), 'sensor_data_cpu', '-v7.3');
+save(fullfile(save_path, 'sensor_data_vertical.mat'), 'sensor_data_cpu', '-v7.3');
