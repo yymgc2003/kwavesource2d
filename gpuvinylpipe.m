@@ -85,7 +85,7 @@ for n = 0:max_n
     end
     
     idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = sin(2*pi * source_freq * (t_array(idx_on) - t_start));
+    source_signal(idx_on) = source_mag * sin(2*pi * source_freq * (t_array(idx_on) - t_start));
 end
 source.p = source_signal;
 
@@ -115,8 +115,8 @@ sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
 figure;
-plot(kgrid.t_array*1e6, sensor_data.p(1, :));
-xlabel('Time [\mus]');
+plot(kgrid.t_array*1e3, sensor_data.p(1, :));
+xlabel('Time [ms]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vinyl pipe');
 saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe.png')); 

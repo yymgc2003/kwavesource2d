@@ -25,8 +25,8 @@ medium.density     = 1000;     % [kg/m^3]
 %medium.alpha_mode  = 'no_dispersion';
 
 % 塩ビ管のパラメータ
-vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
-vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
+vinyl.sound_speed = 2390;      % [m/s] 塩ビの音速
+vinyl.density     = 1400;      % [kg/m^3] 塩ビの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
 % -------------------------------------------------------------------------
@@ -58,7 +58,7 @@ kgrid.makeTime(medium.sound_speed, [], t_end);
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
 source_freq = 4e6;
-source_mag = 1;
+source_mag = 10;
 source_signal = zeros(size(kgrid.t_array));
 prf = 3000;
 T_prf = 1 / prf;
@@ -75,7 +75,7 @@ for n = 0:max_n
     end
     
     idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = sin(2*pi * source_freq * (t_array(idx_on) - t_start));
+    source_signal(idx_on) = source_mag * sin(2*pi * source_freq * (t_array(idx_on) - t_start));
 end
 source.p = source_signal;
 
@@ -106,8 +106,8 @@ sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
 figure;
-plot(kgrid.t_array*1e6, sensor_data.p(1, :));
-xlabel('Time [\mus]');
+plot(kgrid.t_array*1e3, sensor_data.p(1, :));
+xlabel('Time [ms]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vertical vinyl layer');
 saveas(gcf, fullfile(save_path, 'sensor_vinyl_vertical.png')); 
