@@ -29,7 +29,7 @@ clearvars;
 
 % simulation settings
 DATA_CAST = 'gpuArray-single';
-save_path = '/mnt/sdb/matsubara/tmp';
+save_path = '/home/user01/Document/Matsubara/documents/tmp';
 % =========================================================================
 % DEFINE THE K-WAVE GRID
 % =========================================================================
@@ -159,8 +159,6 @@ xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Scan Line After Beamforming');
 
-% すでに transducer を生成したあと (transducer = kWaveTransducer(...))
-% 次のようにして可視化用の figure を用意し、transducer.plot() を呼ぶ
 
 figure;
 transducer.plot();
