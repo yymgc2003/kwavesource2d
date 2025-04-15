@@ -1,11 +1,13 @@
 {
 	"folders": [
 		{
-			"path": ".."
+			"path": "../.."
 		},
 		{
-			"path": "../../../../mnt/matsubara/movies"
+			"path": "../../../../../../mnt/sdb/matsubara"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
 }

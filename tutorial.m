@@ -1,131 +1,171 @@
-% =========================================================================
-% 2D k-Wave simulation with a focusing arc transducer
-% =========================================================================
+% Using An Ultrasound Transducer As A Sensor Example
+%
+% This example shows how an ultrasound transducer can be used as a detector
+% by substituting a transducer object for the normal sensor input
+% structure. It builds on the Defining An Ultrasound Transducer and
+% Simulating Ultrasound Beam Patterns examples.
+%
+% author: Bradley Treeby
+% date: 1st August 2011
+% last update: 4th June 2017
+%  
+% This function is part of the k-Wave Toolbox (http://www.k-wave.org)
+% Copyright (C) 2011-2017 Bradley Treeby
+
+% This file is part of k-Wave. k-Wave is free software: you can
+% redistribute it and/or modify it under the terms of the GNU Lesser
+% General Public License as published by the Free Software Foundation,
+% either version 3 of the License, or (at your option) any later version.
+% 
+% k-Wave is distributed in the hope that it will be useful, but WITHOUT ANY
+% WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
+% more details. 
+% 
+% You should have received a copy of the GNU Lesser General Public License
+% along with k-Wave. If not, see <http://www.gnu.org/licenses/>. 
+
 clearvars;
-close all;
 
-% -------------------------------------------------------------------------
-% 1) シミュレーション用グリッドの定義
-% -------------------------------------------------------------------------
-Nx = 256;               % x方向グリッド数 (行方向)
-Ny = 256;               % y方向グリッド数 (列方向)
-dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
-dy = 0.1e-3;            % グリッド間隔 [m]
-kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '/home/matsubara/Scripts/tmp';
-% -------------------------------------------------------------------------
-% 2) 媒質パラメータ
-% -------------------------------------------------------------------------
-medium.sound_speed = 1500;     % [m/s]
-medium.density     = 1000;     % [kg/m^3]  (水と同程度)
-% 減衰を無視するなら:
-medium.alpha_coeff = 0;        % dB/(MHz^y cm)
-medium.alpha_power = 1.0;
-medium.alpha_mode  = 'no_dispersion';
-% -------------------------------------------------------------------------
-% 3) 円弧形トランスデューサのマスクを作成 (makeArc)
-%    ヘルプ: arc = makeArc(grid_size, arc_pos, radius, diameter, focus_pos, ...)
-% -------------------------------------------------------------------------
-% グリッドサイズ [Nx, Ny] を1つ目の引数に
-grid_size  = [Nx, Ny];
-source.p_mask = zeros(Nx, Ny);
-source.p_mask(50:200, Ny/2) = 1;
+% simulation settings
+DATA_CAST = 'gpuArray-single';
+save_path = '/mnt/sdb/matsubara/tmp';
+% =========================================================================
+% DEFINE THE K-WAVE GRID
+% =========================================================================
 
+% set the size of the perfectly matched layer (PML)
+PML_X_SIZE = 20;            % [grid points]
+PML_Y_SIZE = 10;            % [grid points]
+PML_Z_SIZE = 10;            % [grid points]
 
+% set total number of grid points not including the PML
+Nx = 128 - 2*PML_X_SIZE;    % [grid points]
+Ny = 128 - 2*PML_Y_SIZE;    % [grid points]
+Nz = 64 - 2*PML_Z_SIZE;     % [grid points]
 
-% -------------------------------------------------------------------------
-% 5) シミュレーション時間配列の作成
-%    -> t_end をある程度大きくすると、集束が観察しやすい
-% -------------------------------------------------------------------------
-t_end = 1e-3;  % シミュレーションを 30マイクロ秒 まで実行 (例)
+% set desired grid size in the x-direction not including the PML
+x = 40e-3;                  % [m]
+
+% calculate the spacing between the grid points
+dx = x/Nx;                  % [m]
+dy = dx;                    % [m]
+dz = dx;                    % [m]
+
+% create the k-space grid
+kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
+
+% =========================================================================
+% DEFINE THE MEDIUM PARAMETERS
+% =========================================================================
+
+% define the properties of the propagation medium
+medium.sound_speed = 1500;      % [m/s]
+medium.density = 1000;          % [kg/m^3]
+medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
+medium.alpha_power = 1.5;
+medium.BonA = 6;
+
+% create the time array
+t_end = 40e-6;                  % [s]
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
-% -------------------------------------------------------------------------
-% 6) ソース波形の設定 (正弦波)
-% -------------------------------------------------------------------------
-source_freq = 4e6;  % 周波数 4 MHz
-source_mag  = 1;      % 振幅 [Pa] (相対値でもOK)
-%source_signal = source_mag * sin(2 * pi * source_freq * kgrid.t_array);
-source_signal = zeros(size(kgrid.t_array));
-prf = 3000;                            
-T_prf = 1 / prf;   % = 0.000333... s (0.33 ms)
-t_array = kgrid.t_array;
-% 各パルスのオン時間 [s]
-pulse_length = 1e-6;   % 1 μs
-max_n = 1000;  % 適宜大きめに取る
+% =========================================================================
+% DEFINE THE SOURCE
+% =========================================================================
 
-for n = 0:max_n
-    
-    % n回目のパルスが始まる時刻
-    t_start = n * T_prf;
-    % パルスが終わる時刻
-    t_end = t_start + pulse_length;
-    
-    % もし始まりがシミュレーション時間を超えたら打ち切る
-    if t_start > kgrid.t_array(end)
-        break;
-    end
-    
-    % t_array の中で [t_start, t_end) に含まれるインデックスを探す
-    idx_on = (t_array >= t_start) & (t_array < t_end);
-    
-    % その区間だけ 4 MHz の正弦波を割り当てる
-    % 位相を揃えるなら (t_array - t_start) を使うと、各パルスが同位相になります
-    source_signal(idx_on) = sin(2*pi * source_freq * (t_array(idx_on) - t_start));
-end
-source.p = source_signal;
-% -------------------------------------------------------------------------
-% 7) センサーの設定
-% -------------------------------------------------------------------------
-% ここではフォーカス位置より少し下(奥)に1点センサーを置いてみる
-sensor.mask = zeros(Nx, Ny);
-sensor_x = Nx/2;
-sensor_y = Ny/2 + 70;   % arc_posからさらに70グリッド下
-sensor.mask(sensor_x, sensor_y) = 1;
+% create source mask
+source.p_mask = makeBall(Nx, Ny, Nz, round(25e-3/dx), Ny/2, Nz/2, 3)...
+    + makeBall(Nx, Ny, Nz, round(8e-3/dx), Ny/4, Nz/2, 3);
 
-% 必要に応じて他の位置にもセンサーを置く、あるいは全領域をマスクにして音場分布を記録してもよい
+% define properties of the input signal
+source_strength = 1e6;          % [Pa]
+tone_burst_freq = 0.5e6;        % [Hz]
+tone_burst_cycles = 5;
 
-% センサーが記録する物理量
-sensor.record = {'p'};  % 圧力を記録
+% create the input signal using toneBurst 
+source.p = source_strength .* toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
-% -------------------------------------------------------------------------
-% 8) シミュレーションのオプション設定
-% -------------------------------------------------------------------------
-input_args = {
-    'DataCast', 'gpuArray-double', ...  % GPUを使う場合 (GPUがあれば)
-    'PlotSim', false, ...               % シミュレーション中の描画
-    'RecordMovie', true, ...           % シミュレーション動画保存 (要trueなら)
-    'MovieName', fullfile(save_path, 'tutorial.avi'), ... % 動画保存するならファイル名指定
-};
+% =========================================================================
+% DEFINE THE ULTRASOUND TRANSDUCER
+% =========================================================================
 
-% -------------------------------------------------------------------------
-% 9) シミュレーション実行
-% -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
+% physical properties of the transducer
+transducer.number_elements = 72;    % total number of transducer elements
+transducer.element_width = 1;       % width of each element [grid points/voxels]
+transducer.element_length = 12;     % length of each element [grid points/voxels]
+transducer.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer.radius = inf;            % radius of curvature of the transducer [m]
 
-% -------------------------------------------------------------------------
-% 10) 結果の可視化 (センサー波形)
-% -------------------------------------------------------------------------
+% calculate the width of the transducer in grid points
+transducer_width = transducer.number_elements * transducer.element_width ...
+    + (transducer.number_elements - 1) * transducer.element_spacing;
+
+% use this to position the transducer in the middle of the computational grid
+transducer.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
+
+% properties used to derive the beamforming delays
+transducer.sound_speed = 1540;                  % sound speed [m/s]
+transducer.focus_distance = 25e-3;              % focus distance [m]
+transducer.elevation_focus_distance = 19e-3;    % focus distance in the elevation plane [m]
+transducer.steering_angle = 0;                  % steering angle [degrees]
+
+% apodization
+transducer.transmit_apodization = 'Rectangular';    
+transducer.receive_apodization = 'Rectangular';
+
+% define the transducer elements that are currently active
+transducer.active_elements = zeros(transducer.number_elements, 1);
+transducer.active_elements(21:52) = 1;
+
+% create the transducer using the defined settings
+transducer = kWaveTransducer(kgrid, transducer);
+
+% print out transducer properties
+transducer.properties;
+
+% =========================================================================
+% RUN THE SIMULATION
+% =========================================================================
+
+% set the input settings
+input_args = {'DisplayMask', transducer.active_elements_mask, ...
+    'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
+    'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
+
+% run the simulation
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{:});
+
+% extract a single scan line from the sensor data using the current
+% beamforming settings
+scan_line = transducer.scan_line(sensor_data);
+
+% =========================================================================
+% VISUALISATION
+% =========================================================================
+
+% plot the recorded time series
 figure;
-plot(kgrid.t_array*1e6, sensor_data.p(1, :));
+stackedPlot(kgrid.t_array * 1e6, sensor_data);
 xlabel('Time [\mus]');
-ylabel('Pressure [Pa]');
-title('Pressure at the sensor');
-saveas(gcf, '/home/matsubara/Scripts/tmp/sensor.png');
-% -------------------------------------------------------------------------
-% 11) フィールド全体を可視化したい場合
-% -------------------------------------------------------------------------
-% センサーを全領域に設定し、sensor.record = {'p_rms'} 等で
-% シミュレーション後に arc_mask を可視化すると、焦点付近の強い音圧分布が確認できます。
-% 例:
-% sensor.mask = ones(Nx, Ny);
-% sensor.record = {'p_rms'};
-% -> sensor_data.p_rms は [Nx, Ny] のマトリックスとして返ってくる
-%
-% その場合は:
-%   figure;
-%   imagesc(sensor_data.p_rms);
-%   axis image;
-%   colorbar;
-%   colormap(getColorMap);
-% -------------------------------------------------------------------------
+ylabel('Transducer Element');
+title('Recorded Pressure');
+scaleFig(1, 1.5);
+saveas(gcf, fullfile(save_path, 'sensor_transducer.png')); 
+% plot the scan line
+figure;
+plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'k-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Scan Line After Beamforming');
+
+% すでに transducer を生成したあと (transducer = kWaveTransducer(...))
+% 次のようにして可視化用の figure を用意し、transducer.plot() を呼ぶ
+
+figure;
+transducer.plot();
+title('Transducer geometry in 3D');
+view(3);        % 3Dビューに切り替え
+axis tight;     % 軸範囲をデータに合わせる
+axis equal;     % X/Y/Z 軸のスケールを等倍にする(必要に応じて)
+saveas(gcf, fullfile(save_path, 'transducer_3d_view.png'));
