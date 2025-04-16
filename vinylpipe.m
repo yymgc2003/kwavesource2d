@@ -29,11 +29,12 @@ vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
 vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
+diameter = 0.009; % [m] effective transducer diameter
 % -------------------------------------------------------------------------
 % 3) ソースとガラス円環のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(Nx/2-10:Nx/2+10, Ny/2-distance_pipe_source/dy) = 1;
+source.p_mask(Nx/2-diameter/(2*dx):Nx/2+diameter/(2*dx), Ny/2-distance_pipe_source/dy) = 1; % locate at the center
 
 % ガラス円環のマスクを作成
 %glass_mask = zeros(Nx, Ny);
@@ -68,7 +69,7 @@ kgrid.makeTime(medium.sound_speed, [], t_end);
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
 source_freq = 4e6;
-source_mag = 1;
+source_mag = 10;
 source_signal = zeros(size(kgrid.t_array));
 prf = 3000;
 T_prf = 1 / prf;

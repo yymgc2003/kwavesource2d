@@ -29,11 +29,12 @@ vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
 vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
+diameter = 0.009; % [m] effective transducer diameter
 % -------------------------------------------------------------------------
 % 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(500:520, Ny/2-distance_pipe_source/dy) = 1;
+source.p_mask(Nx/2-diameter/(2*dx):Nx/2+diameter/(2*dx), Ny/2-distance_pipe_source/dy) = 1; % locate at the center
 
 
 pipe_mask = zeros(Nx, Ny);
