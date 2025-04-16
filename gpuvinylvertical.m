@@ -1,5 +1,5 @@
 % =========================================================================
-% 2D k-Wave simulation with a focusing arc transducer and vertical glass layer
+% 2D k-Wave simulation with a focusing arc transducer and vertical vinyl layer
 % =========================================================================
 clearvars;
 close all;
@@ -12,8 +12,8 @@ Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-%save_path = '/mnt/sdb/matsubara/tmp'; % for dl-box
-save_path = '/mnt/matsubara/rawdata' % for jacob
+save_path = '/mnt/sdb/matsubara/tmp'; % for dl-box
+%save_path = '/mnt/matsubara/rawdata'; % for jacob
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
 % -------------------------------------------------------------------------
@@ -29,11 +29,12 @@ vinyl.sound_speed = 2390;      % [m/s] 塩ビの音速
 vinyl.density     = 1400;      % [kg/m^3] 塩ビの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
+diameter = 0.009; % [m] effective transducer diameter
 % -------------------------------------------------------------------------
 % 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
-source.p_mask(500:520, Ny/2-distance_pipe_source/dy) = 1;
+source.p_mask(Nx/2-diameter/(2*dx):Nx/2+diameter/(2*dx), Ny/2-distance_pipe_source/dy) = 1; % locate at the center
 
 
 pipe_mask = zeros(Nx, Ny);

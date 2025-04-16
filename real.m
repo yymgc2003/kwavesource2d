@@ -1,5 +1,5 @@
 % =========================================================================
-% 2D k-Wave simulation with a focusing arc transducer and vinyl ring
+% 2D k-Wave simulation with a focusing arc transducer and vertical glass layer
 % =========================================================================
 clearvars;
 close all;
@@ -12,8 +12,8 @@ Ny = 1024;               % y方向グリッド数 (列方向)
 dx = 0.1e-3;            % グリッド間隔 [m] (0.1 mm)
 dy = 0.1e-3;            % グリッド間隔 [m]
 kgrid = kWaveGrid(Nx, dx, Ny, dy);
-save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
-%save_path = '/mnt/matsubara/rawdata' ;% for jacob
+save_path = '/mnt/sdb/matsubara/tmp';
+
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
 % -------------------------------------------------------------------------
@@ -24,45 +24,69 @@ medium.density     = 1000;     % [kg/m^3]
 %medium.alpha_power = 1.0;
 %medium.alpha_mode  = 'no_dispersion';
 
-% ガラスのパラメータ
+% 塩ビ管のパラメータ
 vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
 vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
+
+% ガラスビーズのパラメータ
+bead.sound_speed = 5500;       % [m/s] ガラスビーズの音速
+bead.density     = 2500;       % [kg/m^3] ガラスビーズの密度
+bead.diameter    = 5e-3;       % [m] ガラスビーズの直径 (5mm)
+bead.radius_grid = round(bead.diameter/(2*dx)); % グリッド単位での半径
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
 diameter = 0.009; % [m] effective transducer diameter
 % -------------------------------------------------------------------------
-% 3) ソースとガラス円環のマスクを作成
+% 3) ソースとガラス層のマスクを作成
 % -------------------------------------------------------------------------
 source.p_mask = zeros(Nx, Ny);
 source.p_mask(Nx/2-diameter/(2*dx):Nx/2+diameter/(2*dx), Ny/2-distance_pipe_source/dy) = 1; % locate at the center
 
-% ガラス円環のマスクを作成
-%glass_mask = zeros(Nx, Ny);
-center_x = Nx/2+160;
-center_y = Ny/2;
-outer_radius = 160;  % 外側の半径
-inner_radius = 130;   % 内側の半径
-thickness = outer_radius - inner_radius;
 
-% 円環のマスクを作成
-[X, Y] = meshgrid(1:Nx, 1:Ny);
-X = X - center_x;
-Y = Y - center_y;
-R = sqrt(X.^2 + Y.^2);
-pipe_mask = (R <= outer_radius) & (R >= inner_radius);
+pipe_mask = zeros(Nx, Ny);
+pipe_thickness = 30;  % ガラスの厚さ（グリッド数）
+pipe_center_first = Ny/2 ;   % ガラスの中心位置
+pipe_center_second = Ny/2 + 300;   % ガラスの中心位置
+pipe_mask(:, pipe_center_first-pipe_thickness/2:pipe_center_first+pipe_thickness/2) = 1;
+pipe_mask(:, pipe_center_second-pipe_thickness/2:pipe_center_second+pipe_thickness/2) = 1;
 
-% 媒質パラメータのマスクを作成
-medium.sound_speed = medium.sound_speed * ones(Nx, Ny);
-medium.density = medium.density * ones(Nx, Ny);
+% ガラスビーズのマスクを作成
+bead_mask = zeros(Nx, Ny);
+num_beads = 10; % ガラスビーズの数
 
-% ガラス円環のパラメータを設定
+% 円管内部にランダムにガラスビーズを配置
+for i = 1:num_beads
+    % 円管内部の範囲を定義（最初の円管と2番目の円管の間）
+    y_min = pipe_center_first + pipe_thickness/2;
+    y_max = pipe_center_second - pipe_thickness/2;
+    
+    % ランダムなy座標を生成（円管内部のみ）
+    y_pos = randi([y_min, y_max]);
+    
+    % x座標はNx/2の直線上に配置
+    x_pos = Nx/2;
+    
+    % ガラスビーズのマスクを作成（円形）
+    [X, Y] = meshgrid(1:Nx, 1:Ny);
+    bead_center = [x_pos, y_pos];
+    bead_distance = sqrt((X - bead_center(1)).^2 + (Y - bead_center(2)).^2);
+    bead_mask(bead_distance <= bead.radius_grid) = 1;
+end
+
+% 媒質パラメータの設定
+medium.sound_speed = 1500 * ones(Nx, Ny);
+medium.density     = 1000 * ones(Nx, Ny);
 medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
 medium.density(pipe_mask == 1) = vinyl.density;
+
+% ガラスビーズのパラメータを設定
+medium.sound_speed(bead_mask == 1) = bead.sound_speed;
+medium.density(bead_mask == 1) = bead.density;
 
 % -------------------------------------------------------------------------
 % 4) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-t_end = 1e-3; % longer than 1e-3 period simulation result in too long computational time. for movie visualization, 0.1ms simulation time is enough
+t_end = 1e-4;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
@@ -86,7 +110,7 @@ for n = 0:max_n
     end
     
     idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = source_mag * sin(2*pi * source_freq * (t_array(idx_on) - t_start));
+    source_signal(idx_on) = sin(2*pi * source_freq * (t_array(idx_on) - t_start));
 end
 source.p = source_signal;
 
@@ -104,25 +128,25 @@ sensor.record = {'p'};
 % -------------------------------------------------------------------------
 input_args = {
     'PMLInside', false, 'PlotPML', false, ...
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'vinylvertical_with_beads.avi'), ...
     'DataCast', DATA_CAST, ...
     };
 
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
-
+sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor, input_args{:});
+%p_all = sensor_data.field;
+%save('data.mat','p_all','-v7.3');
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
 figure;
-plot(kgrid.t_array*1e3, sensor_data.p(1, :));
-xlabel('Time [ms]');
+plot(kgrid.t_array*1e6, sensor_data.p(1, :));
+xlabel('Time [\mus]');
 ylabel('Pressure [Pa]');
-title('Pressure at the sensor with vinyl pipe');
-saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe.png')); 
-% kspaceFirstOrder2D実行後にGPU配列をCPUに集約
+title('Pressure at the sensor with vertical vinyl layer and glass beads');
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_vertical_with_beads.png')); 
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
-
-% v7.3 形式で.matファイル保存
-save(fullfile(save_path, 'sensor_data_pipe.mat'), 'sensor_data_cpu', '-v7.3');
+save(fullfile(save_path, 'sensor_data_vertical_with_beads.mat'), 'sensor_data_cpu', '-v7.3');
