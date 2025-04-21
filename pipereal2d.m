@@ -29,8 +29,8 @@ vinyl.sound_speed = 2390;      % [m/s] 塩ビの音速
 vinyl.density     = 1400;      % [kg/m^3] 塩ビの密度
 
 % ガラスビーズのパラメータ
-bead.sound_speed = 5500;       % [m/s] ガラスビーズの音速
-bead.density     = 2500;       % [kg/m^3] ガラスビーズの密度
+bead.sound_speed = 5500;       % [m/s] ガラス中の音速
+bead.density     = 2500;       % [kg/m^3] ガラスの密度
 bead.diameter    = 5e-3;       % [m] ガラスビーズの直径 (5mm)
 bead.radius_grid = round(bead.diameter/(2*dx)); % グリッド単位での半径
 
