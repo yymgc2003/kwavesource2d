@@ -20,8 +20,8 @@ save_path = '/mnt/sdb/matsubara/tmp';
 % 水のパラメータ
 medium.sound_speed = 1500;     % [m/s]
 medium.density     = 1000;     % [kg/m^3]
-%medium.alpha_coeff = 0;        % dB/(MHz^y cm)
-%medium.alpha_power = 1.0;
+medium.alpha_coeff = 0.5;        % dB/(MHz^y cm)
+medium.alpha_power = 1.5;
 %medium.alpha_mode  = 'no_dispersion';
 
 % ガラスのパラメータ
