@@ -143,7 +143,9 @@ scan_line = transducer.scan_line(sensor_data);
 % =========================================================================
 % VISUALISATION
 % =========================================================================
-
+voxelPlot(double(source.p_mask | cart2grid(kgrid, sensor.mask)));
+view(127, 18);
+saveas(gcf, fullfile(save_path, 'tr_config_3d.png'));
 % plot the recorded time series
 figure;
 stackedPlot(kgrid.t_array * 1e6, sensor_data);

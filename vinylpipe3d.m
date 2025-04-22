@@ -1,5 +1,5 @@
 % =========================================================================
-% 3D k-Wave simulation with a focusing transducer and vinyl ring
+% 3D k-Wave simulation with a focusing transducer1 and vinyl ring
 % =========================================================================
 clearvars;
 close all;
@@ -18,6 +18,7 @@ kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
 %save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
 save_path = '/mnt/matsubara/rawdata' ;% for jacob
+number_scan_lines = 4;
 
 % -------------------------------------------------------------------------
 % 2) 媒質パラメータ
@@ -35,70 +36,83 @@ transducer_freq = 4e6;         % トランスデューサー周波数 [Hz]
 focus_distance = 0.05;         % 焦点距離 [m]
 diameter = 0.009;             % トランスデューサー直径 [m]
 
-t_end = 40e-6;
+t_end = 100e-6;
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % -------------------------------------------------------------------------
 % 3) トランスデューサーとビニール円環の設定
 % -------------------------------------------------------------------------
-% ソースマスクを簡略化
-source.p_mask = makeBall(Nx, Ny, Nz, round(12e-3/dx), Ny/2, Nz/2, 3);
 
 % define properties of the input signal
-source_strength = 1e6;          % [Pa]
+source_strength = 1e5;          % [Pa]
 tone_burst_freq = 4e6;        % [Hz]
 tone_burst_cycles = 4;
+input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
+input_signal = (source_strength ./ (medium.sound_speed * medium.density)) .* input_signal;
 
-% create the input signal using toneBurst 
-source.p = source_strength .* toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
-% トランスデューサーの物理的特性
-transducer.number_elements = 36;    % 要素数を減らす (72 -> 36)
-transducer.element_width = 1;       
-transducer.element_length = 6;      % 長さを短く (12 -> 6)
-transducer.element_spacing = 0;     
-transducer.radius = inf;            
-
-% calculate the width of the transducer in grid points
-transducer_width = transducer.number_elements * transducer.element_width ...
-    + (transducer.number_elements - 1) * transducer.element_spacing;
-
-% use this to position the transducer in the middle of the computational grid
-transducer.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
+% トランスデューサーのハードウェア情報
+transducer1.number_elements = 90;    
+transducer1.element_width = 1;       
+transducer1.element_length = 6;      
+transducer1.element_spacing = 0;     
+transducer1.radius = inf;            
+transducer2.number_elements = 90;    
+transducer2.element_width = 1;       
+transducer2.element_length = 6;      
+transducer2.element_spacing = 0;     
+transducer2.radius = inf;        
+% calculate the width of the transducer1 in grid points
+transducer_width = transducer1.number_elements * transducer1.element_width ...
+    + (transducer1.number_elements - 1) * transducer1.element_spacing;
 
 % properties used to derive the beamforming delays
-transducer.sound_speed = 1540;                  % sound speed [m/s]
-transducer.focus_distance = 25e-3;              % focus distance [m]
-transducer.elevation_focus_distance = 19e-3;    % focus distance in the elevation plane [m]
-transducer.steering_angle = 0;                  % steering angle [degrees]
+transducer1.sound_speed = 1540;                  % sound speed [m/s]
+transducer1.focus_distance = 25e-3;              % focus distance [m]
+transducer1.elevation_focus_distance = 19e-3;    % focus distance in the elevation plane [m]
+transducer1.steering_angle = 0;                  % steering angle [degrees]
+transducer1.transmit_apodization = 'Rectangular';    
+transducer1.receive_apodization = 'Rectangular';
+transducer2.sound_speed = 1540;                  % sound speed [m/s]
+transducer2.focus_distance = 25e-3;              % focus distance [m]
+transducer2.elevation_focus_distance = 19e-3;    % focus distance in the elevation plane [m]
+transducer2.steering_angle = 0;                  % steering angle [degrees]
+transducer2.transmit_apodization = 'Rectangular';    
+transducer2.receive_apodization = 'Rectangular';
 
-% apodization
-transducer.transmit_apodization = 'Rectangular';    
-transducer.receive_apodization = 'Rectangular';
 
-% define the transducer elements that are currently active
-transducer.active_elements = zeros(transducer.number_elements, 1);
-transducer.active_elements(11:26) = 1;          % アクティブ要素数を調整
 
-% create the transducer using the defined settings
-transducer = kWaveTransducer(kgrid, transducer);
+    
+% using transducer1 as source 
+transducer1.input_signal = input_signal;
+% calculate the width of the transducer1 in grid points
+transducer_width = transducer2.number_elements * transducer2.element_width ...
+    + (transducer2.number_elements - 1) * transducer2.element_spacing;
+transducer1.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
+transducer2.position = round([1000, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
 
-% print out transducer properties
-transducer.properties;
+transducer1.active_elements = zeros(transducer1.number_elements, 1);
+transducer1.active_elements(4:30) = 1;
+transducer2.active_elements = zeros(transducer2.number_elements, 1);
+transducer2.active_elements(4:30) = 1;
+
+transducer1 = kWaveTransducer(kgrid, transducer1);          
+transducer2 = kWaveTransducer(kgrid, transducer2);
+% print out transducer1 properties
+transducer1.properties;
+transducer2.properties;
+
 
 % ビニール円環のマスクを作成 - サイズを調整
-center = [Nx/2, Ny/2+40];
-outer_radius = 40;  % 外側の半径を小さく (160 -> 40)
-inner_radius = 32;  % 内側の半径を小さく (130 -> 32)
+cx = Nx/2;            % X 方向の中心
+cy = Ny/2 + 40;       % Y 方向の中心
+outer_r = 160; inner_r = 116;
 
-[X, Y] = meshgrid(1:Nx, 1:Ny);
-X = X - center(1);
-Y = Y - center(2);
-R = sqrt(X.^2 + Y.^2);
+[Xg, Yg] = ndgrid(1:Nx, 1:Ny);
+ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
+ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);   % Nx×Ny logical
 
-% Create mask for vinyl pipe aligned with Z-axis
-pipe_mask_2d = (R <= outer_radius) & (R >= inner_radius);
-pipe_mask = repmat(permute(pipe_mask_2d,[2 1]), [1 1 Nz]);      % Nx×Ny×Nz
+pipe_mask = repmat(ringMask, [1 1 Nz]);   % Nx×Ny×Nz     % Nx×Ny×Nz
 
 % Initialize medium parameters
 medium.sound_speed = medium.sound_speed .* ones(Nx, Ny, Nz);
@@ -120,8 +134,9 @@ sensor.record = {'p'};
 % -------------------------------------------------------------------------
 % 6) シミュレーションのオプション設定
 % -------------------------------------------------------------------------
+display_mask = transducer1.active_elements_mask | transducer2.active_elements_mask | pipe_mask;
 input_args = {...
-    'DisplayMask', transducer.active_elements_mask, ...
+    'DisplayMask', display_mask ...
     'PMLInside', false, ...
     'PlotPML', false, ...
     'RecordMovie', true, ...
@@ -132,27 +147,25 @@ input_args = {...
 % -------------------------------------------------------------------------
 % 7) トランスデューサーの可視化
 % -------------------------------------------------------------------------
-figure;
-voxelPlot(single(pipe_mask));
-hold on;
-title('Transducer and Vinyl Pipe Configuration');
-xlabel('X [grid points]');
-ylabel('Y [grid points]');
-zlabel('Z [grid points]');
-view(45, 30);
-saveas(gcf, fullfile(save_path, 'transducer_config_3d.png'));
+
+
+% create voxel plot of transducer1 mask and 
+voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask));
+view(126, 25);
+saveas(gcf, fullfile(save_path, 'trans_config_3d.png'));
+
 
 % -------------------------------------------------------------------------
 % 8) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder3D(kgrid, medium, source, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer1, transducer2, input_args{:});
 
 % -------------------------------------------------------------------------
 % 9) 結果の可視化
 % -------------------------------------------------------------------------
 field=gather(sensor_data);
 figure;
-imagesc(field(:,:,end/2));
+imagesc(field(:,:));
 colorbar;
 title('Pressure Field at Central Plane');
 xlabel('X [grid points]');
