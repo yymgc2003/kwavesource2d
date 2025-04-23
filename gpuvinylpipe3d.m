@@ -3,17 +3,29 @@
 % =========================================================================
 clearvars;
 close all;
-DATA_CAST = 'gpuArray-single';
+
+% Load configuration from JSON file
+try
+    config_file = fullfile(fileparts(mfilename('fullpath')), 'config.json');
+    if ~exist(config_file, 'file')
+        error('設定ファイルが見つかりません: %s', config_file);
+    end
+    config = jsondecode(fileread(config_file));
+catch ME
+    error('設定ファイルの読み込みに失敗しました: %s', ME.message);
+end
+
+DATA_CAST = config.simulation.data_cast;
 
 % -------------------------------------------------------------------------
 % 1) Grids for simulation
 % -------------------------------------------------------------------------
-Nx = 512;               % minimum and maximum considering the limitation of memory
-Ny = 512;               % minimum considering the size of the experimental settings
-Nz = 128;                % minimum considering the size of the transducers
-dx = 0.1e-3;            % maximum considering the source ultrasonic frequency
-dy = 0.1e-3;            
-dz = 0.1e-3;            
+Nx = config.grid.Nx;
+Ny = config.grid.Ny;
+Nz = config.grid.Nz;
+dx = config.grid.dx;
+dy = config.grid.dy;
+dz = config.grid.dz;
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
 save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
@@ -62,6 +74,7 @@ transducer2.element_width = 1;
 transducer2.element_length = 6;      
 transducer2.element_spacing = 0;     
 transducer2.radius = inf;        
+
 % calculate the width of the transducer1 in grid points
 transducer_width = transducer1.number_elements * transducer1.element_width ...
     + (transducer1.number_elements - 1) * transducer1.element_spacing;
@@ -92,9 +105,9 @@ transducer1.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer1.e
 transducer2.position = round([Nx-10, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
 
 transducer1.active_elements = zeros(transducer1.number_elements, 1);
-transducer1.active_elements(4:30) = 1;
+transducer1.active_elements(config.transducer.config.active_elements_range(1):config.transducer.config.active_elements_range(2)) = 1;
 transducer2.active_elements = zeros(transducer2.number_elements, 1);
-transducer2.active_elements(4:30) = 1;
+transducer2.active_elements(config.transducer.config.active_elements_range(1):config.transducer.config.active_elements_range(2)) = 1;
 
 transducer1 = kWaveTransducer(kgrid, transducer1);          
 transducer2 = kWaveTransducer(kgrid, transducer2);
