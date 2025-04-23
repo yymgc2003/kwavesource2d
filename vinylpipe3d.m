@@ -3,6 +3,7 @@
 % =========================================================================
 clearvars;
 close all;
+DATA_CAST = 'gpuArray-single';
 
 % -------------------------------------------------------------------------
 % 1) 設定ファイルの読み込み
@@ -70,77 +71,104 @@ medium.density(pipe_mask == 1) = vinyl.density;
 % 6) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
 kgrid.makeTime(medium.sound_speed, [], config.simulation.t_end);
+% create the input signal using toneBurst 
+source_strength = 1e2;          % [Pa]
+tone_burst_freq = 4e6;    	% [Hz]
+tone_burst_cycles = 4;
+input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
-% -------------------------------------------------------------------------
-% 7) ソース波形の設定
-% -------------------------------------------------------------------------
-source_signal = zeros(size(kgrid.t_array));
-T_prf = 1 / config.source.prf;
-t_array = kgrid.t_array;
+% scale the source magnitude by the source_strength divided by the
+% impedance (the source is assigned to the particle velocity)
+input_signal = (source_strength ./ (medium.sound_speed * medium.density)) .* input_signal;
+    
+% using transducer1 as source 
+transducer1.input_signal = input_signal;
+% calculate the width of the transducer1 in grid points
+transducer_width = transducer2.number_elements * transducer2.element_width ...
+    + (transducer2.number_elements - 1) * transducer2.element_spacing;
+transducer1.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
+transducer2.position = round([Nx-10, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
 
-for n = 0:config.source.max_n
-    t_start = n * T_prf;
-    t_end = t_start + config.source.pulse_length;
-    
-    if t_start > kgrid.t_array(end)
-        break;
-    end
-    
-    idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = config.source.magnitude * sin(2*pi * config.source.frequency * (t_array(idx_on) - t_start));
-end
-source.p = source_signal;
+transducer1.active_elements = zeros(transducer1.number_elements, 1);
+transducer1.active_elements(4:30) = 1;
+transducer2.active_elements = zeros(transducer2.number_elements, 1);
+transducer2.active_elements(4:30) = 1;
+
+transducer1 = kWaveTransducer(kgrid, transducer1);          
+transducer2 = kWaveTransducer(kgrid, transducer2);
+% print out transducer1 properties
+%transducer1.properties;
+%transducer2.properties;
+
+
+% ビニール円環のマスクを作成 - サイズを調整
+cx = Nx/2;            % X 方向の中心
+cy = Ny/2;       % Y 方向の中心
+outer_r = 160; inner_r = 116;
+
+[Xg, Yg] = ndgrid(1:Nx, 1:Ny);
+ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
+ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);   % Nx×Ny logical
+
+pipe_mask = repmat(ringMask, [1 1 Nz]);   % Nx×Ny×Nz     % Nx×Ny×Nz
+
+% Initialize medium parameters
+medium.sound_speed = medium.sound_speed .* ones(Nx, Ny, Nz);
+medium.density = medium.density .* ones(Nx, Ny, Nz);
+
+medium.sound_speed(pipe_mask) = vinyl.sound_speed;
+medium.density(pipe_mask) = vinyl.density;
+
 
 % -------------------------------------------------------------------------
 % 8) センサーの設定
 % -------------------------------------------------------------------------
-sensor.mask = zeros(config.grid.Nx, config.grid.Ny, config.grid.Nz);
-sensor_x = config.grid.Nx/2 + config.sensor.x_offset;
-sensor_y = config.grid.Ny/2 + config.sensor.y_offset;
-sensor_z = config.grid.Nz/2 + config.sensor.z_offset;
-
-if strcmp(config.sensor.type, 'point')
-    sensor.mask(sensor_x, sensor_y, sensor_z) = 1;
-elseif strcmp(config.sensor.type, 'array')
-    % アレイセンサーの設定
-    % ここにアレイセンサーの設定コードを追加
-end
+sensor.mask = zeros(Nx, Ny, Nz);
+sensor_plane = zeros(Nx, Ny);
+sensor_plane(Nx/2-50:Nx/2+50, Ny/2-50:Ny/2+50) = 1;
+sensor.mask(:, :, Nz/2) = sensor_plane;
 sensor.record = {'p'};
 
 % -------------------------------------------------------------------------
 % 9) シミュレーションのオプション設定
 % -------------------------------------------------------------------------
-input_args = {
+display_mask = transducer1.active_elements_mask | transducer2.active_elements_mask | pipe_mask;
+input_args = {...
+    'DisplayMask', display_mask ...
     'PMLInside', false, ...
-    'PlotPML', config.visualization.plot_pml, ...
-    'DataCast', config.simulation.data_cast, ...
-    'PMLSize', config.simulation.pml_size, ...
-    'PMLAlpha', config.simulation.pml_alpha, ...
-    'PlotSim', config.visualization.plot_sim, ...
-    'PlotScale', config.visualization.plot_scale, ...
-    'RecordMovie', config.visualization.record_movie, ...
-    'MovieName', config.visualization.movie_name
+    'PlotPML', false, ...
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'vinyl_pipe_3d.avi'), ...
+    'DataCast', DATA_CAST
     };
 
 % -------------------------------------------------------------------------
 % 10) シミュレーション実行
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder3D(kgrid, medium, source, sensor, input_args{:});
+
+
+% create voxel plot of transducer1 mask and 
+voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask |pipe_mask));
+view(126, 25);
+saveas(gcf, fullfile(save_path, 'trans_config_3d.png'));
+
 
 % -------------------------------------------------------------------------
 % 11) 結果の可視化
 % -------------------------------------------------------------------------
-if config.visualization.plot_sim
-    figure;
-    plot(kgrid.t_array*1e3, sensor_data.p(1, :));
-    xlabel('Time [ms]');
-    ylabel('Pressure [Pa]');
-    title('Pressure at the sensor with vinyl pipe');
-    saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe_3d.png')); 
-end
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer1, transducer2, input_args{:});
 
-% kspaceFirstOrder3D実行後にGPU配列をCPUに集約
-sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
+% -------------------------------------------------------------------------
+% 9) 結果の可視化
+% -------------------------------------------------------------------------
+field=gather(sensor_data);
+figure;
+imagesc(field(:,:));
+colorbar;
+title('Pressure Field at Central Plane');
+xlabel('X [grid points]');
+ylabel('Y [grid points]');
+saveas(gcf, fullfile(save_path, 'pressure_field_3d.png'));
 
-% v7.3 形式で.matファイル保存
-save(fullfile(save_path, 'sensor_data_pipe_3d.mat'), 'sensor_data_cpu', '-v7.3');
+% データの保存
+save(fullfile(save_path, 'sensor_data_3d.mat'), 'sensor_data', '-v7.3');
