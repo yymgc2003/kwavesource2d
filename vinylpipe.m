@@ -20,13 +20,13 @@ save_path = '/mnt/sdb/matsubara/tmp';
 % 水のパラメータ
 medium.sound_speed = 1500;     % [m/s]
 medium.density     = 1000;     % [kg/m^3]
-%medium.alpha_coeff = 0;        % dB/(MHz^y cm)
-%medium.alpha_power = 1.0;
-%medium.alpha_mode  = 'no_dispersion';
+medium.alpha_coeff = 0.002;    % [dB/(MHz^y cm)]
+medium.alpha_power = 2;
+medium.BonA = 6;
 
-% ガラスのパラメータ
-vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
-vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
+% 塩ビのパラメータ
+vinyl.sound_speed = 2390;      % [m/s] 塩ビの音速
+vinyl.density     = 1400;      % [kg/m^3] 塩ビの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
 diameter = 0.009; % [m] effective transducer diameter

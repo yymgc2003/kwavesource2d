@@ -8,16 +8,16 @@ DATA_CAST = 'gpuArray-single';
 % -------------------------------------------------------------------------
 % 1) Grids for simulation
 % -------------------------------------------------------------------------
-Nx = 1024;               % minimum and maximum considering the limitation of memory
-Ny = 1024;               % minimum considering the size of the experimental settings
+Nx = 512;               % minimum and maximum considering the limitation of memory
+Ny = 512;               % minimum considering the size of the experimental settings
 Nz = 128;                % minimum considering the size of the transducers
 dx = 0.1e-3;            % maximum considering the source ultrasonic frequency
 dy = 0.1e-3;            
 dz = 0.1e-3;            
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
-%save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
-save_path = '/mnt/matsubara/rawdata' ;% for jacob
+save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
+%save_path = '/mnt/matsubara/rawdata' ;% for jacob
 number_scan_lines = 4;
 
 % -------------------------------------------------------------------------
@@ -89,7 +89,7 @@ transducer1.input_signal = input_signal;
 transducer_width = transducer2.number_elements * transducer2.element_width ...
     + (transducer2.number_elements - 1) * transducer2.element_spacing;
 transducer1.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
-transducer2.position = round([1000, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
+transducer2.position = round([Nx-10, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
 
 transducer1.active_elements = zeros(transducer1.number_elements, 1);
 transducer1.active_elements(4:30) = 1;

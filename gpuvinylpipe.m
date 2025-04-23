@@ -20,9 +20,9 @@ save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
 % 水のパラメータ
 medium.sound_speed = 1500;     % [m/s]
 medium.density     = 1000;     % [kg/m^3]
-%medium.alpha_coeff = 0;        % dB/(MHz^y cm)
-%medium.alpha_power = 1.0;
-%medium.alpha_mode  = 'no_dispersion';
+medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
+medium.alpha_power = 1.5;
+medium.BonA = 6;
 
 % ガラスのパラメータ
 vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
@@ -120,7 +120,7 @@ plot(kgrid.t_array*1e3, sensor_data.p(1, :));
 xlabel('Time [ms]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vinyl pipe');
-saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe.png')); 
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe_bad.png')); 
 % kspaceFirstOrder2D実行後にGPU配列をCPUに集約
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
 
