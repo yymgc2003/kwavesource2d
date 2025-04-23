@@ -26,7 +26,9 @@ number_scan_lines = 4;
 % 水のパラメータ
 medium.sound_speed = 1500;     % [m/s]
 medium.density     = 1000;     % [kg/m^3]
-
+medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
+medium.alpha_power = 1.5;
+medium.BonA = 6;
 % ビニールのパラメータ
 vinyl.sound_speed = 2390;      % [m/s]
 vinyl.density     = 1400;      % [kg/m^3]
@@ -37,7 +39,7 @@ focus_distance = 0.05;         % 焦点距離 [m]
 diameter = 0.009;             % トランスデューサー直径 [m]
 
 t_end = 100e-6;
-kgrid.makeTime(medium.sound_speed, [], t_end);
+kgrid.makeTime(vinyl.density, 0.05, t_end); % usage; kgrid.makeTime(sound_speed, cfl, t_end)
 
 % -------------------------------------------------------------------------
 % 3) トランスデューサーとビニール円環の設定
@@ -99,13 +101,13 @@ transducer2.active_elements(4:30) = 1;
 transducer1 = kWaveTransducer(kgrid, transducer1);          
 transducer2 = kWaveTransducer(kgrid, transducer2);
 % print out transducer1 properties
-transducer1.properties;
-transducer2.properties;
+%transducer1.properties;
+%transducer2.properties;
 
 
 % ビニール円環のマスクを作成 - サイズを調整
 cx = Nx/2;            % X 方向の中心
-cy = Ny/2 + 40;       % Y 方向の中心
+cy = Ny/2;       % Y 方向の中心
 outer_r = 160; inner_r = 116;
 
 [Xg, Yg] = ndgrid(1:Nx, 1:Ny);
@@ -150,7 +152,7 @@ input_args = {...
 
 
 % create voxel plot of transducer1 mask and 
-voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask));
+voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask |pipe_mask));
 view(126, 25);
 saveas(gcf, fullfile(save_path, 'trans_config_3d.png'));
 
