@@ -24,9 +24,9 @@ medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
 medium.alpha_power = 1.5;
 medium.BonA = 6;
 
-% ガラスのパラメータ
-vinyl.sound_speed = 2390;      % [m/s] ガラスの音速
-vinyl.density     = 1400;      % [kg/m^3] ガラスの密度
+% 塩ビのパラメータ
+vinyl.sound_speed = 2390;      % [m/s] 塩ビの音速
+vinyl.density     = 1400;      % [kg/m^3] 塩ビの密度
 
 distance_pipe_source = 0.05; % [m] distance between glass and source
 diameter = 0.009; % [m] effective transducer diameter
@@ -55,7 +55,7 @@ pipe_mask = (R <= outer_radius) & (R >= inner_radius);
 medium.sound_speed = medium.sound_speed * ones(Nx, Ny);
 medium.density = medium.density * ones(Nx, Ny);
 
-% ガラス円環のパラメータを設定
+% 塩化ビニル円環のパラメータを設定
 medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
 medium.density(pipe_mask == 1) = vinyl.density;
 

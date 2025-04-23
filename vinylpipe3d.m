@@ -16,8 +16,8 @@ dy = 0.1e-3;
 dz = 0.1e-3;            
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
-save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
-%save_path = '/mnt/matsubara/rawdata' ;% for jacob
+%save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
+save_path = '/mnt/matsubara/rawdata' ;% for jacob
 number_scan_lines = 4;
 
 % -------------------------------------------------------------------------
@@ -26,8 +26,8 @@ number_scan_lines = 4;
 % 水のパラメータ
 medium.sound_speed = 1500;     % [m/s]
 medium.density     = 1000;     % [kg/m^3]
-medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
-medium.alpha_power = 1.5;
+medium.alpha_coeff = 0.002;      % [dB/(MHz^y cm)]
+medium.alpha_power = 2;
 medium.BonA = 6;
 % ビニールのパラメータ
 vinyl.sound_speed = 2390;      % [m/s]
@@ -38,8 +38,8 @@ transducer_freq = 4e6;         % トランスデューサー周波数 [Hz]
 focus_distance = 0.05;         % 焦点距離 [m]
 diameter = 0.009;             % トランスデューサー直径 [m]
 
-t_end = 100e-6;
-kgrid.makeTime(vinyl.density, 0.05, t_end); % usage; kgrid.makeTime(sound_speed, cfl, t_end)
+t_end = 100e-6; %[s]
+kgrid.makeTime(vinyl.density, 0.04, t_end); % usage; kgrid.makeTime(sound_speed, cfl, t_end)
 
 % -------------------------------------------------------------------------
 % 3) トランスデューサーとビニール円環の設定
@@ -108,7 +108,7 @@ transducer2 = kWaveTransducer(kgrid, transducer2);
 % ビニール円環のマスクを作成 - サイズを調整
 cx = Nx/2;            % X 方向の中心
 cy = Ny/2;       % Y 方向の中心
-outer_r = 160; inner_r = 116;
+outer_r = 160; inner_r = 130;
 
 [Xg, Yg] = ndgrid(1:Nx, 1:Ny);
 ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
