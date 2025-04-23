@@ -115,7 +115,7 @@ plot(kgrid.t_array*1e3, sensor_data.p(1, :));
 xlabel('Time [ms]');
 ylabel('Pressure [Pa]');
 title('Pressure at the sensor with vinyl pipe');
-saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe_bad.png')); 
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe_gpu.png')); 
 
 % kspaceFirstOrder2D実行後にGPU配列をCPUに集約
 sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);

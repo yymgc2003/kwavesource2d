@@ -1,5 +1,5 @@
 % =========================================================================
-% 3D k-Wave simulation with a focusing transducer1 and vinyl ring
+% 3D k-Wave simulation with a focusing arc transducer and vinyl pipe (GPU version)
 % =========================================================================
 clearvars;
 close all;
@@ -18,14 +18,14 @@ end
 DATA_CAST = config.simulation.data_cast;
 
 % -------------------------------------------------------------------------
-% 1) Grids for simulation
+% 1) 設定ファイルの読み込み
 % -------------------------------------------------------------------------
-Nx = config.grid.Nx;
-Ny = config.grid.Ny;
-Nz = config.grid.Nz;
-dx = config.grid.dx;
-dy = config.grid.dy;
-dz = config.grid.dz;
+Nx = 512;               % minimum and maximum considering the limitation of memory
+Ny = 512;               % minimum considering the size of the experimental settings
+Nz = 128;                % minimum considering the size of the transducers
+dx = 0.1e-3;            % maximum considering the source ultrasonic frequency
+dy = 0.1e-3;            
+dz = 0.1e-3;            
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
 save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
@@ -33,26 +33,33 @@ save_path = '/mnt/sdb/matsubara/tmp'; %for dl-box
 number_scan_lines = 4;
 
 % -------------------------------------------------------------------------
-% 2) 媒質パラメータ
+% 3) 媒質パラメータ
 % -------------------------------------------------------------------------
 % 水のパラメータ
-medium.sound_speed = 1500;     % [m/s]
-medium.density     = 1000;     % [kg/m^3]
+medium.sound_speed = config.medium.water.sound_speed;
+medium.density     = config.medium.water.density;
+medium.alpha_coeff = config.medium.water.alpha_coeff;
+medium.alpha_power = config.medium.water.alpha_power;
+medium.BonA = config.medium.water.BonA;
 
-% ビニールのパラメータ
-vinyl.sound_speed = 2390;      % [m/s]
-vinyl.density     = 1400;      % [kg/m^3]
-
-% トランスデューサーのパラメータ
-transducer_freq = 4e6;         % トランスデューサー周波数 [Hz]
-focus_distance = 0.05;         % 焦点距離 [m]
-diameter = 0.009;             % トランスデューサー直径 [m]
-
-t_end = 100e-6;
-kgrid.makeTime(medium.sound_speed, [], t_end);
+% ガラスのパラメータ
+vinyl.sound_speed = config.medium.vinyl.sound_speed;
+vinyl.density     = config.medium.vinyl.density;
 
 % -------------------------------------------------------------------------
-% 3) トランスデューサーとビニール円環の設定
+% 4) トランスデューサーの設定
+% -------------------------------------------------------------------------
+% トランスデューサーの位置と向きを設定
+transducer_pos = config.transducer.position;
+transducer_rot = config.transducer.rotation;
+transducer_focus = config.transducer.focus;
+
+% トランスデューサーのマスクを作成
+source.p_mask = zeros(config.grid.Nx, config.grid.Ny, config.grid.Nz);
+% ここにトランスデューサーの形状に基づいたマスク作成コードを追加
+
+% -------------------------------------------------------------------------
+% 5) ガラスパイプの設定
 % -------------------------------------------------------------------------
 
 % define properties of the input signal
@@ -74,7 +81,6 @@ transducer2.element_width = 1;
 transducer2.element_length = 6;      
 transducer2.element_spacing = 0;     
 transducer2.radius = inf;        
-
 % calculate the width of the transducer1 in grid points
 transducer_width = transducer1.number_elements * transducer1.element_width ...
     + (transducer1.number_elements - 1) * transducer1.element_spacing;
@@ -136,7 +142,7 @@ medium.density(pipe_mask) = vinyl.density;
 
 
 % -------------------------------------------------------------------------
-% 5) センサーの設定
+% 8) センサーの設定
 % -------------------------------------------------------------------------
 sensor.mask = zeros(Nx, Ny, Nz);
 sensor_plane = zeros(Nx, Ny);
@@ -145,7 +151,7 @@ sensor.mask(:, :, Nz/2) = sensor_plane;
 sensor.record = {'p'};
 
 % -------------------------------------------------------------------------
-% 6) シミュレーションのオプション設定
+% 9) シミュレーションのオプション設定
 % -------------------------------------------------------------------------
 display_mask = transducer1.active_elements_mask | transducer2.active_elements_mask | pipe_mask;
 input_args = {...
@@ -169,21 +175,17 @@ saveas(gcf, fullfile(save_path, 'trans_config_3d.png'));
 
 
 % -------------------------------------------------------------------------
-% 8) シミュレーション実行
+% 11) 結果の可視化
 % -------------------------------------------------------------------------
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer1, transducer2, input_args{:});
-
-% -------------------------------------------------------------------------
-% 9) 結果の可視化
-% -------------------------------------------------------------------------
-field=gather(sensor_data);
 figure;
-imagesc(field(:,:));
-colorbar;
-title('Pressure Field at Central Plane');
-xlabel('X [grid points]');
-ylabel('Y [grid points]');
-saveas(gcf, fullfile(save_path, 'pressure_field_3d.png'));
+plot(kgrid.t_array*1e3, sensor_data.p(1, :));
+xlabel('Time [ms]');
+ylabel('Pressure [Pa]');
+title('Pressure at the sensor with vinyl pipe (GPU)');
+saveas(gcf, fullfile(save_path, 'sensor_vinyl_pipe_3d_gpu.png')); 
 
-% データの保存
-save(fullfile(save_path, 'sensor_data_3d.mat'), 'sensor_data', '-v7.3');
+% kspaceFirstOrder3DG実行後にGPU配列をCPUに集約
+sensor_data_cpu = structfun(@gather, sensor_data, 'UniformOutput', false);
+
+% v7.3 形式で.matファイル保存
+save(fullfile(save_path, 'sensor_data_pipe_3d_gpu.mat'), 'sensor_data_cpu', '-v7.3');
