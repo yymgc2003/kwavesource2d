@@ -28,7 +28,7 @@
 clearvars;
 
 % simulation settings
-DATA_CAST = 'single';
+DATA_CAST = 'gpuArray-single';
 save_path = '/home/matsubara/Scripts/tmp';
 % =========================================================================
 % DEFINE THE K-WAVE GRID
@@ -134,7 +134,7 @@ input_args = {'DisplayMask', transducer.active_elements_mask, ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, source, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{:});
 
 % extract a single scan line from the sensor data using the current
 % beamforming settings
@@ -143,7 +143,7 @@ scan_line = transducer.scan_line(sensor_data);
 % =========================================================================
 % VISUALISATION
 % =========================================================================
-voxelPlot(double(source.p_mask | cart2grid(kgrid, sensor.mask)));
+voxelPlot(double(source.p_mask | transducer.active_elements_mask));
 view(127, 18);
 saveas(gcf, fullfile(save_path, 'tr_config_3d.png'));
 % plot the recorded time series

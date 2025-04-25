@@ -3,16 +3,16 @@
 % =========================================================================
 clearvars;
 close all;
-
+DATA_CAST = 'gpuArray-single';
 % -------------------------------------------------------------------------
 % 1) 設定ファイルの読み込み
 % -------------------------------------------------------------------------
-config = jsondecode(fileread('config.json'));
+config = jsondecode(fileread('../config.json'));
 
 % -------------------------------------------------------------------------
 % 2) シミュレーション用グリッドの定義
 % -------------------------------------------------------------------------
-kgrid = kWaveGrid(config.grid.Nx, config.grid.dx, config.grid.Ny, config.grid.dy);
+kgrid = kWaveGrid(config.grid.Nx, config.grid.dx, config.grid.Ny, config.grid.dy,config.grid.Nz, config.grid.dz);
 save_path = config.save_path;
 
 % -------------------------------------------------------------------------
@@ -20,32 +20,49 @@ save_path = config.save_path;
 % -------------------------------------------------------------------------
 medium.sound_speed = config.medium.water.sound_speed;
 medium.density = config.medium.water.density;
-
+kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
-transducer.number_elements = config.transducer.elements;
-transducer.element_width = config.transducer.element_width;
-transducer.element_length = config.transducer.element_height;
-transducer.element_spacing = config.transducer.element_spacing;
-transducer.radius = config.transducer.radius;
-
-% トランスデューサーの位置と向きを設定
-transducer.position = config.transducer.position;
-transducer.rotation = config.transducer.rotation;
-transducer.focus = config.transducer.focus;
-
-% トランスデューサーのプロパティを設定
+transducer.number_elements = 72;    % total number of transducer elements
+transducer.element_width = 1;       % width of each element [grid points/voxels]
+transducer.element_length = 12;     % length of each element [grid points/voxels]
+transducer.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer.radius = inf;            % radius of curvature of the transducer [m]
+transducer_width = transducer.number_elements * transducer.element_width ...
+    + (transducer.number_elements - 1) * transducer.element_spacing;
+transducer.position = round([1, config.grid.Ny/4 - transducer_width/8, config.grid.Nz/2 - transducer.element_length/2]);
 transducer.sound_speed = config.medium.water.sound_speed;
-transducer.focus_distance = norm(config.transducer.focus - config.transducer.position);
-transducer.elevation_focus_distance = transducer.focus_distance;
+transducer.focus_distance = 25e-3;
+transducer.elevation_focus_distance = 19e-3;
 transducer.steering_angle = 0;
 transducer.transmit_apodization = 'Rectangular';
 transducer.receive_apodization = 'Rectangular';
+transducer.active_elements = zeros(transducer.number_elements, 1);
+transducer.active_elements(21:52) = 1;
 
+transducer_trans.number_elements = 72;    % total number of transducer elements
+transducer_trans.element_width = 1;       % width of each element [grid points/voxels]
+transducer_trans.element_length = 12;     % length of each element [grid points/voxels]
+transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
+transducer_width = transducer.number_elements * transducer.element_width ...
+    + (transducer.number_elements - 1) * transducer.element_spacing;
+transducer_trans.position = round([1000, config.grid.Ny/4 - transducer_width/8, config.grid.Nz/2 - transducer.element_length/2]);
+transducer_trans.sound_speed = config.medium.water.sound_speed;
+transducer_trans.focus_distance = 25e-3;
+transducer_trans.elevation_focus_distance = 19e-3;
+transducer_trans.steering_angle = 0;
+transducer_trans.transmit_apodization = 'Rectangular';
+transducer_trans.receive_apodization = 'Rectangular';
+transducer_trans.active_elements = zeros(transducer.number_elements, 1);
+transducer_trans.active_elements(21:52) = 1;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
+source_strength = 1e6;          % [Pa]
+tone_burst_freq = 4e6;        % [Hz]
+tone_burst_cycles = 4;
 source_signal = zeros(size(kgrid.t_array));
 T_prf = 1 / config.source.prf;
 t_array = kgrid.t_array;
@@ -67,28 +84,32 @@ transducer.input_signal = source_signal;
 % 6) トランスデューサーの初期化
 % -------------------------------------------------------------------------
 transducer = kWaveTransducer(kgrid, transducer);
-
+transducer_trans = kWaveTransducer(kgrid, transducer_trans);
 % -------------------------------------------------------------------------
 % 7) センサーの設定
 % -------------------------------------------------------------------------
-sensor.mask = zeros(config.grid.Nx, config.grid.Ny);
+sensor.mask = zeros(config.grid.Nx, config.grid.Ny, config.grid.Ny);
 sensor_x = config.grid.Nx/2 + config.sensor.x_offset;
 sensor_y = config.grid.Ny/2 + config.sensor.y_offset;
 
 % stream the data to disk in blocks of 100 if storing the complete time
 % history 
-if ~USE_STATISTICS
-    input_args = [input_args {'StreamToDisk', 100}];
-end
+%if ~USE_STATISTICS
+%    input_args = [input_args {'StreamToDisk', 100}];
+%end
+input_args = {'DisplayMask', transducer.active_elements_mask, ...
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'transducer_tutorial.avi'), ...
+    'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 sensor.record = {'p'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, sensor, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-voxelPlot(double(transducer | cart2grid(kgrid, sensor.mask)));
+voxelPlot(double(transducer |transducer.active_elements_mask |transducer_trans.active_elements_mask ));
 view(127, 18);
 saveas(gcf, fullfile(save_path, 'trans_config_3d_tut.png'));
 if USE_STATISTICS

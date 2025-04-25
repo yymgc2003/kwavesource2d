@@ -4,10 +4,14 @@
 			"path": ".."
 		},
 		{
-			"path": "../../../../../../mnt/sdb/matsubara"
+			"path": "../../../../mnt/matsubara"
+		},
+		{
+			"path": "../../Documents/MATLAB/k-Wave/examples"
+		},
+		{
+			"path": "../../Documents/MATLAB/k-Wave"
 		}
 	],
-	"settings": {
-		"git.ignoreLimitWarning": true
-	}
+	"settings": {}
 }

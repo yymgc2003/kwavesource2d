@@ -26,7 +26,7 @@ medium.alpha_coeff = config.medium.water.alpha_coeff;
 medium.alpha_power = config.medium.water.alpha_power;
 medium.BonA = config.medium.water.BonA;
 
-% ガラスのパラメータ
+% 塩ビ管のパラメータ
 vinyl.sound_speed = config.medium.vinyl.sound_speed;
 vinyl.density     = config.medium.vinyl.density;
 
@@ -63,7 +63,7 @@ pipe_mask = (R <= config.pipe.outer_radius) & (R >= config.pipe.inner_radius) & 
 medium.sound_speed = medium.sound_speed * ones(config.grid.Nx, config.grid.Ny, config.grid.Nz);
 medium.density = medium.density * ones(config.grid.Nx, config.grid.Ny, config.grid.Nz);
 
-% ガラスパイプのパラメータを設定
+% 塩ビ管のパラメータを設定
 medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
 medium.density(pipe_mask == 1) = vinyl.density;
 
@@ -79,15 +79,21 @@ input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
 % scale the source magnitude by the source_strength divided by the
 % impedance (the source is assigned to the particle velocity)
-input_signal = (source_strength ./ (medium.sound_speed * medium.density)) .* input_signal;
-    
+input_signal = (source_strength ./ (medium.sound_speed(1) * medium.density(1))) .* input_signal;
+transducer1.number_elements = config.transducer.elements;
+transducer2.number_elements = config.transducer.elements;
+transducer2.element_width = config.transducer.element_width;
+transducer2.element_length = config.transducer.element_height;
+transducer2.element_spacing = config.transducer.element_spacing;
+transducer1.radius = inf;
+transducer2.radius = inf;
 % using transducer1 as source 
 transducer1.input_signal = input_signal;
 % calculate the width of the transducer1 in grid points
 transducer_width = transducer2.number_elements * transducer2.element_width ...
     + (transducer2.number_elements - 1) * transducer2.element_spacing;
-transducer1.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
-transducer2.position = round([Nx-10, Ny/2 - transducer_width/2, Nz/2 - transducer1.element_length/2]);
+transducer1.position = round([1, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer2.element_length/2]);
+transducer2.position = round([config.grid.Nx-10, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer2.element_length/2]);
 
 transducer1.active_elements = zeros(transducer1.number_elements, 1);
 transducer1.active_elements(4:30) = 1;
@@ -102,19 +108,19 @@ transducer2 = kWaveTransducer(kgrid, transducer2);
 
 
 % ビニール円環のマスクを作成 - サイズを調整
-cx = Nx/2;            % X 方向の中心
-cy = Ny/2;       % Y 方向の中心
+cx = config.grid.Nx/2;            % X 方向の中心
+cy = config.grid.Ny/2;       % Y 方向の中心
 outer_r = 160; inner_r = 116;
 
-[Xg, Yg] = ndgrid(1:Nx, 1:Ny);
+[Xg, Yg] = ndgrid(1:config.grid.Nx, 1:config.grid.Ny);
 ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
 ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);   % Nx×Ny logical
 
-pipe_mask = repmat(ringMask, [1 1 Nz]);   % Nx×Ny×Nz     % Nx×Ny×Nz
+pipe_mask = repmat(ringMask, [1 1 config.grid.Nz]);   % Nx×Ny×Nz   
 
 % Initialize medium parameters
-medium.sound_speed = medium.sound_speed .* ones(Nx, Ny, Nz);
-medium.density = medium.density .* ones(Nx, Ny, Nz);
+medium.sound_speed = medium.sound_speed .* ones(config.grid.Nx, config.grid.Ny, config.grid.Nz);
+medium.density = medium.density .* ones(config.grid.Nx, config.grid.Ny, config.grid.Nz);
 
 medium.sound_speed(pipe_mask) = vinyl.sound_speed;
 medium.density(pipe_mask) = vinyl.density;
@@ -123,10 +129,10 @@ medium.density(pipe_mask) = vinyl.density;
 % -------------------------------------------------------------------------
 % 8) センサーの設定
 % -------------------------------------------------------------------------
-sensor.mask = zeros(Nx, Ny, Nz);
-sensor_plane = zeros(Nx, Ny);
-sensor_plane(Nx/2-50:Nx/2+50, Ny/2-50:Ny/2+50) = 1;
-sensor.mask(:, :, Nz/2) = sensor_plane;
+sensor.mask = zeros(config.grid.Nx, config.grid.Ny, config.grid.Nz);
+sensor_plane = zeros(config.grid.Nx, config.grid.Ny);
+sensor_plane(config.grid.Nx/2-50:config.grid.Nx/2+50, config.grid.Ny/2-50:config.grid.Ny/2+50) = 1;
+sensor.mask(:, :, config.grid.Nz/2) = sensor_plane;
 sensor.record = {'p'};
 
 % -------------------------------------------------------------------------
@@ -148,7 +154,7 @@ input_args = {...
 
 
 % create voxel plot of transducer1 mask and 
-voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask |pipe_mask));
+voxelPlot(single(transducer1.active_elements_mask | transducer2.active_elements_mask | pipe_mask));
 view(126, 25);
 saveas(gcf, fullfile(save_path, 'trans_config_3d.png'));
 
