@@ -28,7 +28,7 @@
 clearvars;
 
 % simulation settings
-DATA_CAST = 'single';
+DATA_CAST = 'gpuArray-single';
 config = jsondecode(fileread('../config.json'));
 save_path = config.save_path;
 % =========================================================================
@@ -131,11 +131,13 @@ transducer.properties;
 
 % set the input settings
 input_args = {'DisplayMask', transducer.active_elements_mask, ...
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'tr_aasensor.avi'), ...
     'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, source, transducer, input_args{:});
 
 % extract a single scan line from the sensor data using the current
 % beamforming settings

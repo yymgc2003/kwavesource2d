@@ -27,7 +27,7 @@
 clearvars;
 
 % simulation settings
-DATA_CAST = 'single';       % set to 'single' or 'gpuArray-single' to speed up computations
+DATA_CAST = 'gpuArray-single';       % set to 'single' or 'gpuArray-single' to speed up computations
 MASK_PLANE = 'xy';          % set to 'xy' or 'xz' to generate the beam pattern in different planes
 USE_STATISTICS = true;      % set to true to compute the rms or peak beam patterns, set to false to compute the harmonic beam patterns
 config = jsondecode(fileread('../config.json'));
@@ -168,6 +168,8 @@ end
 
 % set the input settings
 input_args = {'DisplayMask', transducer.all_elements_mask, ...
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'tr_aasensor_beam.avi'), ...
     'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
     'DataCast', DATA_CAST, 'DataRecast', true, 'PlotScale', [-1/2, 1/2] * source_strength};
 
@@ -178,7 +180,7 @@ if ~USE_STATISTICS
 end
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, sensor, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, sensor, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
