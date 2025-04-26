@@ -34,7 +34,7 @@ transducer.element_spacing = 0;     % spacing (kerf  width) between the elements
 transducer.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer.position = round([1, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
+transducer.position = round([5, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
 transducer.sound_speed = config.medium.water.sound_speed;
 transducer.focus_distance = 25e-3;
 transducer.elevation_focus_distance = 19e-3;
@@ -51,7 +51,7 @@ transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the el
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([config.grid.Nx-10, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
+transducer_trans.position = round([config.grid.Nx-5, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
@@ -111,7 +111,39 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, i
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask| glass_mask)); % to plot the transducer, write code this way
-%voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask)); % to plot the transducer, write code this way
-view(127, 40);
-saveas(gcf, fullfile(save_path, 'trans_config_3d_glass.png'));
+
+% Method 1: Visualize only the glass mask
+figure(1);
+voxelPlot(single(glass_mask));
+view(127, 18);
+title('Glass Mask Only');
+saveas(gcf, fullfile(save_path, 'glass_mask_only.png'));
+
+% Method 2: Visualize only the transducer masks
+figure(2);
+voxelPlot(single(transducer.active_elements_mask | transducer_trans.active_elements_mask));
+view(127, 18);
+title('Transducer Masks Only');
+saveas(gcf, fullfile(save_path, 'transducer_masks_only.png'));
+
+% Method 3: Alternative visualization using isosurface
+figure(3);
+% Convert logical masks to double for visualization
+glass_mask_double = double(glass_mask);
+transducer_mask_double = double(transducer.active_elements_mask);
+transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
+
+% Create a combined mask
+combined_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
+
+% Create isosurface plot
+p = patch(isosurface(combined_mask, 0.5));
+isonormals(combined_mask, p);
+set(p, 'FaceColor', 'red', 'EdgeColor', 'none');
+daspect([1 1 1]);
+view(127, 18);
+camlight;
+lighting gouraud;
+title('Combined Mask (Isosurface)');
+saveas(gcf, fullfile(save_path, 'combined_mask_isosurface.png'));
+
