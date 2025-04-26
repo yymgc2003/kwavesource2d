@@ -51,7 +51,7 @@ transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the el
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([1000, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
+transducer_trans.position = round([config.grid.Nx-10, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
