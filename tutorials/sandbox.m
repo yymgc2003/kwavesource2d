@@ -22,7 +22,7 @@ medium.sound_speed = config.medium.water.sound_speed;
 medium.density = config.medium.water.density;
 kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
 cx = config.grid.Nx/2; cy = config.grid.Ny/2; cz = config.grid.Nz/2;
-radius_pts = round(5e-3 / config.grid.dx);   
+radius_pts = round(1e-3 / config.grid.dx);   
 glass_mask = makeBall(config.grid.Nx, config.grid.Ny, config.grid.Nz, cx, cy, cz, radius_pts);
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
@@ -111,7 +111,7 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, i
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-%voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask| glass_mask)); % to plot the transducer, write code this way
-voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask)); % to plot the transducer, write code this way
-view(127, 18);
-saveas(gcf, fullfile(save_path, 'trans_config_3d_tut.png'));
+voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask| glass_mask)); % to plot the transducer, write code this way
+%voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask)); % to plot the transducer, write code this way
+view(127, 40);
+saveas(gcf, fullfile(save_path, 'trans_config_3d_glass.png'));

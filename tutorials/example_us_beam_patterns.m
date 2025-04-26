@@ -30,7 +30,8 @@ clearvars;
 DATA_CAST = 'single';       % set to 'single' or 'gpuArray-single' to speed up computations
 MASK_PLANE = 'xy';          % set to 'xy' or 'xz' to generate the beam pattern in different planes
 USE_STATISTICS = true;      % set to true to compute the rms or peak beam patterns, set to false to compute the harmonic beam patterns
-
+config = jsondecode(fileread('../config.json'));
+save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
 % =========================================================================
@@ -177,7 +178,7 @@ if ~USE_STATISTICS
 end
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, sensor, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, sensor, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
@@ -199,7 +200,7 @@ if USE_STATISTICS
     c = colorbar;
     ylabel(c, 'Pressure [MPa]');
     axis image;
-    
+    saveas(gcf, fullfile(save_path, 'maxTotal_Beam_Pattern.png'));
     % plot the beam pattern using the pressure rms
     figure;
     imagesc(j_vec * 1e3, (kgrid.x_vec - min(kgrid.x_vec(:))) * 1e3, sensor_data.p_rms * 1e-6);
@@ -210,7 +211,7 @@ if USE_STATISTICS
     c = colorbar;
     ylabel(c, 'Pressure [MPa]');
     axis image;
-
+    saveas(gcf, fullfile(save_path, 'rmsTotal_Beam_Pattern.png'));
     % end the example
     return
     

@@ -29,7 +29,8 @@ clearvars;
 
 % simulation settings
 DATA_CAST = 'single';
-
+config = jsondecode(fileread('../config.json'));
+save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
 % =========================================================================
@@ -67,7 +68,7 @@ medium.alpha_power = 1.5;
 medium.BonA = 6;
 
 % create the time array
-t_end = 40e-6;                  % [s]
+t_end = 100e-6;                  % [s]
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
 % =========================================================================
@@ -134,7 +135,7 @@ input_args = {'DisplayMask', transducer.active_elements_mask, ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, source, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{:});
 
 % extract a single scan line from the sensor data using the current
 % beamforming settings
@@ -151,10 +152,11 @@ xlabel('Time [\mus]');
 ylabel('Transducer Element');
 title('Recorded Pressure');
 scaleFig(1, 1.5);
-
+saveas(gcf, fullfile(save_path, 'Transducer_Element.png'));
 % plot the scan line
 figure;
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'k-');
 xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Scan Line After Beamforming');
+saveas(gcf, fullfile(save_path, 'Beamforming.png'));
