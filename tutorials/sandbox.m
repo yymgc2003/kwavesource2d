@@ -111,6 +111,7 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, i
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask| glass_mask)); % to plot the transducer, write code this way
+%voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask| glass_mask)); % to plot the transducer, write code this way
+voxelPlot(double(transducer.active_elements_mask | transducer_trans.active_elements_mask)); % to plot the transducer, write code this way
 view(127, 18);
 saveas(gcf, fullfile(save_path, 'trans_config_3d_tut.png'));
