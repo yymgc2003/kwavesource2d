@@ -30,6 +30,8 @@ medium.BonA = config.medium.water.BonA;
 vinyl.sound_speed = config.medium.vinyl.sound_speed;
 vinyl.density     = config.medium.vinyl.density;
 
+glass.sound_speed = 5570;
+glass.density     = 2500;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
@@ -67,10 +69,13 @@ medium.density = medium.density * ones(config.grid.Nx, config.grid.Ny, config.gr
 medium.sound_speed(pipe_mask == 1) = vinyl.sound_speed;
 medium.density(pipe_mask == 1) = vinyl.density;
 
+% ガラス球のパラメータを設定
+medium.sound_speed(glass_mask == 1) = glass.sound_speed;
+medium.density(glass_mask == 1) = glass.density;
 % -------------------------------------------------------------------------
 % 6) シミュレーション時間配列の作成
 % -------------------------------------------------------------------------
-kgrid.makeTime(medium.sound_speed, [], config.simulation.t_end);
+kgrid.makeTime(medium.sound_speed, config.simulation.CFL, config.simulation.t_end);
 % create the input signal using toneBurst 
 source_strength = 1e2;          % [Pa]
 tone_burst_freq = 4e6;    	% [Hz]
@@ -83,7 +88,7 @@ input_signal = (source_strength ./ (medium.sound_speed(1) * medium.density(1))) 
 transducer1.number_elements = config.transducer.elements;
 transducer2.number_elements = config.transducer.elements;
 transducer2.element_width = config.transducer.element_width;
-transducer2.element_length = config.transducer.element_height;
+transducer2.element_length = config.transducer.element_length;
 transducer2.element_spacing = config.transducer.element_spacing;
 transducer1.radius = inf;
 transducer2.radius = inf;

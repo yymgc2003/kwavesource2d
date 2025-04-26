@@ -2,7 +2,7 @@
     "grid": {
         "Nx": 1024,
         "Ny": 1024,
-        "Nz": 256,
+        "Nz": 128,
         "dx": 0.1e-3,
         "dy": 0.1e-3,
         "dz": 0.1e-3
@@ -62,11 +62,12 @@
         }
     },
     "simulation": {
-        "t_end": 1e-4,
+        "t_end": 1e-5,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
-        "pml_alpha": 2
+        "pml_alpha": 2,
+        "CFL": 0.05
     },
     "save_path": "/mnt/matsubara/rawdata"
 } 

@@ -27,12 +27,20 @@
 
 clearvars;
 
-% simulation settings
+% -------------------------------------------------------------------------
+% 1) Load configuration from config.json
+% -------------------------------------------------------------------------
+config = jsondecode(fileread('../config.json'));
+
+% -------------------------------------------------------------------------
+% 2) Simulation settings
+% -------------------------------------------------------------------------
 DATA_CAST = 'gpuArray-single';
-save_path = '/home/matsubara/Scripts/tmp';
-% =========================================================================
-% DEFINE THE K-WAVE GRID
-% =========================================================================
+save_path = config.save_path;
+
+% -------------------------------------------------------------------------
+% 3) Define the k-Wave grid
+% -------------------------------------------------------------------------
 
 % set the size of the perfectly matched layer (PML)
 PML_X_SIZE = 20;            % [grid points]
@@ -55,13 +63,13 @@ dz = dx;                    % [m]
 % create the k-space grid
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
-% =========================================================================
-% DEFINE THE MEDIUM PARAMETERS
-% =========================================================================
+% -------------------------------------------------------------------------
+% 4) Define the medium parameters
+% -------------------------------------------------------------------------
 
 % define the properties of the propagation medium
-medium.sound_speed = 1500;      % [m/s]
-medium.density = 1000;          % [kg/m^3]
+medium.sound_speed = config.medium.water.sound_speed;      % [m/s]
+medium.density = config.medium.water.density;              % [kg/m^3]
 medium.alpha_coeff = 0.75;      % [dB/(MHz^y cm)]
 medium.alpha_power = 1.5;
 medium.BonA = 6;
@@ -70,9 +78,9 @@ medium.BonA = 6;
 t_end = 40e-6;                  % [s]
 kgrid.makeTime(medium.sound_speed, [], t_end);
 
-% =========================================================================
-% DEFINE THE SOURCE
-% =========================================================================
+% -------------------------------------------------------------------------
+% 5) Define the source
+% -------------------------------------------------------------------------
 
 % create source mask
 source.p_mask = makeBall(Nx, Ny, Nz, round(25e-3/dx), Ny/2, Nz/2, 3)...
@@ -83,12 +91,16 @@ source_strength = 1e6;          % [Pa]
 tone_burst_freq = 0.5e6;        % [Hz]
 tone_burst_cycles = 5;
 
+cx = Nx/2; cy = Ny/2; cz = Nz/2;
+radius_pts = round(5e-3 / dx);   
+glass_mask = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
+
 % create the input signal using toneBurst 
 source.p = source_strength .* toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
-% =========================================================================
-% DEFINE THE ULTRASOUND TRANSDUCER
-% =========================================================================
+% -------------------------------------------------------------------------
+% 6) Define the ultrasound transducer
+% -------------------------------------------------------------------------
 
 % physical properties of the transducer
 transducer.number_elements = 72;    % total number of transducer elements
@@ -105,7 +117,7 @@ transducer_width = transducer.number_elements * transducer.element_width ...
 transducer.position = round([1, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
 
 % properties used to derive the beamforming delays
-transducer.sound_speed = 1540;                  % sound speed [m/s]
+transducer.sound_speed = config.medium.water.sound_speed;  % sound speed [m/s]
 transducer.focus_distance = 25e-3;              % focus distance [m]
 transducer.elevation_focus_distance = 19e-3;    % focus distance in the elevation plane [m]
 transducer.steering_angle = 0;                  % steering angle [degrees]
@@ -124,9 +136,9 @@ transducer = kWaveTransducer(kgrid, transducer);
 % print out transducer properties
 transducer.properties;
 
-% =========================================================================
-% RUN THE SIMULATION
-% =========================================================================
+% -------------------------------------------------------------------------
+% 7) Run the simulation
+% -------------------------------------------------------------------------
 
 % set the input settings
 input_args = {'DisplayMask', transducer.active_elements_mask, ...
@@ -140,12 +152,12 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{
 % beamforming settings
 scan_line = transducer.scan_line(sensor_data);
 
-% =========================================================================
-% VISUALISATION
-% =========================================================================
-voxelPlot(double(source.p_mask | transducer.active_elements_mask));
+% -------------------------------------------------------------------------
+% 8) Visualization
+% -------------------------------------------------------------------------
+voxelPlot(double(glass_mask | transducer.active_elements_mask));
 view(127, 18);
-saveas(gcf, fullfile(save_path, 'tr_config_3d.png'));
+saveas(gcf, fullfile(save_path, 'glasstr_config_3d.png'));
 % plot the recorded time series
 figure;
 stackedPlot(kgrid.t_array * 1e6, sensor_data);
