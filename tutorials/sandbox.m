@@ -3,7 +3,7 @@
 % =========================================================================
 clearvars;
 close all;
-DATA_CAST = 'gpuArray-single';
+DATA_CAST = 'single';
 % -------------------------------------------------------------------------
 % 1) 設定ファイルの読み込み
 % -------------------------------------------------------------------------
@@ -22,7 +22,7 @@ medium.sound_speed = config.medium.water.sound_speed;
 medium.density = config.medium.water.density;
 kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
 cx = config.grid.Nx/2; cy = config.grid.Ny/2; cz = config.grid.Nz/2;
-radius_pts = round(1e-3 / config.grid.dx);   
+radius_pts = round(5e-3 / config.grid.dx);   
 glass_mask = makeBall(config.grid.Nx, config.grid.Ny, config.grid.Nz, cx, cy, cz, radius_pts);
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
@@ -60,6 +60,16 @@ transducer_trans.transmit_apodization = 'Rectangular';
 transducer_trans.receive_apodization = 'Rectangular';
 transducer_trans.active_elements = zeros(transducer.number_elements, 1);
 transducer_trans.active_elements(21:52) = 1;
+% ビニール円環のマスクを作成 - サイズを調整
+cx = config.grid.Nx/2;            % X 方向の中心
+cy = config.grid.Ny/2;       % Y 方向の中心
+outer_r = 160; inner_r = 130;
+
+[Xg, Yg] = ndgrid(1:config.grid.Nx, 1:config.grid.Ny);
+ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
+ringMask = (ring2d <= outer_r/config.grid.dx) & (ring2d >= inner_r/config.grid.dy);   % Nx×Ny logical
+
+pipe_mask = repmat(ringMask, [1 1 config.grid.Nz]);   % Nx×Ny×Nz   
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
@@ -112,19 +122,6 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, i
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
 
-% Method 1: Visualize only the glass mask
-figure(1);
-voxelPlot(single(glass_mask));
-view(127, 18);
-title('Glass Mask Only');
-saveas(gcf, fullfile(save_path, 'glass_mask_only.png'));
-
-% Method 2: Visualize only the transducer masks
-figure(2);
-voxelPlot(single(transducer.active_elements_mask | transducer_trans.active_elements_mask));
-view(127, 18);
-title('Transducer Masks Only');
-saveas(gcf, fullfile(save_path, 'transducer_masks_only.png'));
 
 % Method 3: Alternative visualization using isosurface
 figure(3);
@@ -132,18 +129,19 @@ figure(3);
 glass_mask_double = double(glass_mask);
 transducer_mask_double = double(transducer.active_elements_mask);
 transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
-
+pipe_mask_double =double(pipe_mask);
 % Create a combined mask
-combined_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
+combined_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double + pipe_mask_double;
 
 % Create isosurface plot
 p = patch(isosurface(combined_mask, 0.5));
 isonormals(combined_mask, p);
 set(p, 'FaceColor', 'red', 'EdgeColor', 'none');
 daspect([1 1 1]);
-view(127, 18);
+view(70, 18);
 camlight;
 lighting gouraud;
+axis([1 size(combined_mask,1) 1 size(combined_mask,2) 1 size(combined_mask,3)]); % 系全体を表示
 title('Combined Mask (Isosurface)');
 saveas(gcf, fullfile(save_path, 'combined_mask_isosurface.png'));
 
