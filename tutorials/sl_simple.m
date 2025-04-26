@@ -1,5 +1,5 @@
 % =========================================================================
-% k-Wave transducer tutorial
+% k-Wave Solid and Liquid flow using ultrasonic measurement
 % =========================================================================
 clearvars;
 close all;
@@ -10,7 +10,7 @@ DATA_CAST = 'gpuArray-single';
 config = jsondecode(fileread('../config.json'));
 USE_STATISTICS = true;
 % -------------------------------------------------------------------------
-% 2) シミュレーション用グリッドの定義
+% 2) シミュレーション用グリッドの定義(config.grid.dxは、周波数４MHzの計算を理論的にサポートする限界)
 % -------------------------------------------------------------------------
 kgrid = kWaveGrid(config.grid.Nx, config.grid.dx, config.grid.Ny, config.grid.dy,config.grid.Nz, config.grid.dz);
 save_path = config.save_path;
