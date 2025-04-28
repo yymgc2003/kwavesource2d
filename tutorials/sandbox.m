@@ -147,15 +147,11 @@ input_args = {'DisplayMask', display_mask, ...
 sensor.record = {'p','p_max'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, transducer_trans, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-
-
-% Method 3: Alternative visualization using isosurface
-figure(3);
 % Convert logical masks to double for visualization
 glass_mask_double = double(glass_mask);
 transducer_mask_double = double(transducer.active_elements_mask);
@@ -166,13 +162,39 @@ pipe_mask_double = double(pipe_mask);
 glass_transducer_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
 pipe_only_mask = pipe_mask_double;
 
-% Create isosurface plots
-% Glass and transducers (solid)
+% トランスデューサーからの信号を取得
+scan_line = transducer.scan_line(sensor_data);
+scan_line_trans = transducer_trans.scan_line(sensor_data);
+
+% トランスデューサー1の信号を可視化
+figure(1);
+plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Signal from Transducer 1');
+grid on;
+saveas(gcf, fullfile(save_path, 'Transducer1_Signal.png'));
+
+% トランスデューサー2の信号を可視化
+figure(2); 
+plot(kgrid.t_array * 1e6, scan_line_trans * 1e-6, 'r-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Signal from Transducer 2');
+grid on;
+saveas(gcf, fullfile(save_path, 'Transducer2_Signal.png'));
+
+figure(3);
+plot(kgrid.t_array * 1e6, scan_line_trans * 1e-6, 'k-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Scan Line After Beamforming');
+saveas(gcf, fullfile(save_path, 'Beamforming.png'));
+
+figure(4);
 p1 = patch(isosurface(glass_transducer_mask, 0.5));
 isonormals(glass_transducer_mask, p1);
 set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
-
-% Pipe (transparent)
 p2 = patch(isosurface(pipe_only_mask, 0.5));
 isonormals(pipe_only_mask, p2);
 set(p2, 'FaceColor', 'green', 'EdgeColor', 'none', 'FaceAlpha', 0.2);
@@ -184,4 +206,4 @@ camlight;
 lighting gouraud;
 axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
 title('Combined Visualization (Transparent Pipe)');
-saveas(gcf, fullfile(save_path, 'multicombined_visualization_transparent.png'));
+saveas(gcf, fullfile(save_path, 'multicombined_visualization_transparent_sandbox.png'));

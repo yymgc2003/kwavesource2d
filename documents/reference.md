@@ -87,7 +87,7 @@ undefined
 - 海技研・産総研で行われた実験条件に基づいてシミュレーションを実行している。これらのGrid数や刻み幅・時間は計算機の制約から逆算して考えており、あまり変更しないことを勧める。また、数々の物性値に関しては詳細な検討・検証が必要であり、チェッカーによる承認が臨まれる。参考資料・情報に関しては[参考情報](## 13. 参考情報)を検証されたい。
 
 ## 13. 参考情報
-
+- [参考にした書式](https://dev.classmethod.jp/articles/non-97-operation-manual/)
 - [水の減衰係数に関する議論（page 218）](https://jontalle.web.engr.illinois.edu/MISC/Books/KinslerFreyCoopSanders.00.pdf)
 - [ガラスの減衰係数に関する議論](https://pubs.aip.org/asa/jasa/article-pdf/123/4/EL39/14693501/el39_1_online.pdf)
 - [塩ビ管の減衰係数に関する議論](https://www.ondacorp.com/images/Plastics.pdf)
