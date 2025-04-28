@@ -30,7 +30,7 @@ clearvars;
 % -------------------------------------------------------------------------
 % 1) Load configuration from config.json
 % -------------------------------------------------------------------------
-config = jsondecode(fileread('../config.json'));
+config = jsondecode(fileread('config_tutorial.json'));
 
 % -------------------------------------------------------------------------
 % 2) Simulation settings

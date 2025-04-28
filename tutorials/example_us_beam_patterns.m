@@ -30,7 +30,7 @@ clearvars;
 DATA_CAST = 'gpuArray-single';       % set to 'single' or 'gpuArray-single' to speed up computations
 MASK_PLANE = 'xy';          % set to 'xy' or 'xz' to generate the beam pattern in different planes
 USE_STATISTICS = true;      % set to true to compute the rms or peak beam patterns, set to false to compute the harmonic beam patterns
-config = jsondecode(fileread('../config.json'));
+config = jsondecode(fileread('config_tutorial.json'));
 save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
