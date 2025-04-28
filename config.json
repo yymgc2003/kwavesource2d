@@ -17,7 +17,17 @@
         },
         "vinyl": {
             "sound_speed": 2390,
-            "density": 1400
+            "density": 1400,
+            "alpha_coeff": 2.24,
+            "alpha_power": 1,
+            "BonA": 6
+        },
+        "glass": {
+            "sound_speed": 5789,
+            "density": 2240,
+            "alpha_coeff": 0.30,
+            "alpha_power": 1,
+            "BonA": 6
         }
     },
     "transducer": {
@@ -69,5 +79,5 @@
         "pml_alpha": 2,
         "CFL": 0.05
     },
-    "save_path": "/home/user01/Document/Matsubara/documents/tmp"
+    "save_path": "/mnt/matsubara/rawdata"
 } 

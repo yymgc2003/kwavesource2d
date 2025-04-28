@@ -12,18 +12,30 @@ USE_STATISTICS = true;
 % -------------------------------------------------------------------------
 % 2) シミュレーション用グリッドの定義
 % -------------------------------------------------------------------------
-kgrid = kWaveGrid(config.grid.Nx, config.grid.dx, config.grid.Ny, config.grid.dy,config.grid.Nz, config.grid.dz);
+Nx=config.grid.Nx; Ny=config.grid.Ny; Nz=config.grid.Nz;
+dx=config.grid.dx; dy=config.grid.dy; dz=config.grid.dz;
+kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 save_path = config.save_path;
 
 % -------------------------------------------------------------------------
 % 3) 媒質パラメータ
 % -------------------------------------------------------------------------
-medium.sound_speed = config.medium.water.sound_speed;
-medium.density = config.medium.water.density;
+%medium.sound_speed = config.medium.water.sound_speed;
+%medium.density = config.medium.water.density;
+%medium.alpha_coeff = config.medium.water.alpha_coeff;
+medium.sound_speed = config.medium.water.sound_speed * ones(Nx,Ny,Nz,'single');
+medium.density     = config.medium.water.density     * ones(Nx,Ny,Nz,'single');
+medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx,Ny,Nz,'single');
+medium.alpha_power = config.medium.water.alpha_power;
 kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
-cx = config.grid.Nx/2; cy = config.grid.Ny/2; cz = config.grid.Nz/2;
-radius_pts = round(5e-3 / config.grid.dx);   
-glass_mask = makeBall(config.grid.Nx, config.grid.Ny, config.grid.Nz, cx, cy, cz, radius_pts);
+cx = Nx/2; cy = Ny/2; cz = Nz/2;
+radius_pts = round(2.5e-3 / dx);   
+glass_mask1 = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
+glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy+40, cz-40, radius_pts);
+glass_mask3 = makeBall(Nx, Ny, Nz, cx-30, cy-40, cz+40, radius_pts);
+glass_mask4 = makeBall(Nx, Ny, Nz, cx+30, cy-40, cz+40, radius_pts);
+glass_mask5 = makeBall(Nx, Ny, Nz, cx-20, cy-20, cz-20, radius_pts);
+glass_mask = glass_mask1 | glass_mask2 | glass_mask3 | glass_mask4 | glass_mask5;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
@@ -34,7 +46,7 @@ transducer.element_spacing = 0;     % spacing (kerf  width) between the elements
 transducer.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer.position = round([5, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
+transducer.position = round([5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
 transducer.sound_speed = config.medium.water.sound_speed;
 transducer.focus_distance = 25e-3;
 transducer.elevation_focus_distance = 19e-3;
@@ -51,7 +63,7 @@ transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the el
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([config.grid.Nx-5, config.grid.Ny/2 - transducer_width/2, config.grid.Nz/2 - transducer.element_length/2]);
+transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
@@ -60,16 +72,32 @@ transducer_trans.transmit_apodization = 'Rectangular';
 transducer_trans.receive_apodization = 'Rectangular';
 transducer_trans.active_elements = zeros(transducer.number_elements, 1);
 transducer_trans.active_elements(21:52) = 1;
+
 % ビニール円環のマスクを作成 - サイズを調整
-cx = config.grid.Nx/2;            % X 方向の中心
-cy = config.grid.Ny/2;       % Y 方向の中心
-outer_r = 160; inner_r = 130;
+cx = Nx/2;            % X 方向の中心
+cy = Ny/2;            % Y 方向の中心
 
-[Xg, Yg] = ndgrid(1:config.grid.Nx, 1:config.grid.Ny);
-ring2d = sqrt( (Xg-cx).^2 + (Yg-cy).^2 );
-ringMask = (ring2d <= outer_r/config.grid.dx) & (ring2d >= inner_r/config.grid.dy);   % Nx×Ny logical
+% 外径・内径をグリッドポイント数に変換（mmからmに変換してから計算）
+outer_r_mm = 16;  % 外径 [mm]
+inner_r_mm = 13;  % 内径 [mm]
+outer_r = round((outer_r_mm * 1e-3) / dx);  % 外径をグリッドポイント数に変換
+inner_r = round((inner_r_mm * 1e-3) / dx);  % 内径をグリッドポイント数に変換
 
-pipe_mask = repmat(ringMask, [1 1 config.grid.Nz]);   % Nx×Ny×Nz   
+% 2次元の円環マスクを作成
+[Xg, Yg] = ndgrid(1:Nx, 1:Ny);
+ring2d = sqrt((Xg-cx).^2 + (Yg-cy).^2);
+ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);   % Nx×Ny logical
+
+pipe_mask = repmat(ringMask, [1 1 Nz]);   % Nx×Ny×Nz   
+medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
+medium.density(pipe_mask == 1) = config.medium.vinyl.density;
+medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
+%medium.alpha_power(pipe_mask) = config.medium.vinyl.alpha_power;
+
+medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
+medium.density(glass_mask == 1) = config.medium.glass.density;
+medium.alpha_coeff(glass_mask) = config.medium.glass.alpha_coeff;
+%medium.alpha_power(glass_mask) = config.medium.glass.alpha_power;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
@@ -98,13 +126,13 @@ transducer.input_signal = source_signal;
 % -------------------------------------------------------------------------
 transducer = kWaveTransducer(kgrid, transducer);
 transducer_trans = kWaveTransducer(kgrid, transducer_trans);
-%transducer.properties;
+transducer.properties;
 % -------------------------------------------------------------------------
 % 7) センサーの設定
 % -------------------------------------------------------------------------
-sensor.mask = zeros(config.grid.Nx, config.grid.Ny, config.grid.Ny);
-sensor_x = config.grid.Nx/2 + config.sensor.x_offset;
-sensor_y = config.grid.Ny/2 + config.sensor.y_offset;
+sensor.mask = zeros(Nx, Ny, Ny);
+sensor_x = Nx/2 + config.sensor.x_offset;
+sensor_y = Ny/2 + config.sensor.y_offset;
 
 % stream the data to disk in blocks of 100 if storing the complete time
 % history 
@@ -129,19 +157,28 @@ figure(3);
 glass_mask_double = double(glass_mask);
 transducer_mask_double = double(transducer.active_elements_mask);
 transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
-pipe_mask_double =double(pipe_mask);
-% Create a combined mask
-combined_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double + pipe_mask_double;
+pipe_mask_double = double(pipe_mask);
 
-% Create isosurface plot
-p = patch(isosurface(combined_mask, 0.5));
-isonormals(combined_mask, p);
-set(p, 'FaceColor', 'red', 'EdgeColor', 'none');
+% Create separate masks for visualization
+glass_transducer_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
+pipe_only_mask = pipe_mask_double;
+
+% Create isosurface plots
+% Glass and transducers (solid)
+p1 = patch(isosurface(glass_transducer_mask, 0.5));
+isonormals(glass_transducer_mask, p1);
+set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
+
+% Pipe (transparent)
+p2 = patch(isosurface(pipe_only_mask, 0.5));
+isonormals(pipe_only_mask, p2);
+set(p2, 'FaceColor', 'green', 'EdgeColor', 'none', 'FaceAlpha', 0.2);
+
+% Set up the figure
 daspect([1 1 1]);
-view(70, 18);
+view(80, 30);
 camlight;
 lighting gouraud;
-axis([1 size(combined_mask,1) 1 size(combined_mask,2) 1 size(combined_mask,3)]); % 系全体を表示
-title('Combined Mask (Isosurface)');
-saveas(gcf, fullfile(save_path, 'combined_mask_isosurface.png'));
-
+axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
+title('Combined Visualization (Transparent Pipe)');
+saveas(gcf, fullfile(save_path, 'multicombined_visualization_transparent.png'));
