@@ -1,22 +1,22 @@
 <!-- omit in toc -->
-# 2025-04-28 kwave simulation tutorial
+# 2021-07-14 株式会社XXXXX様 SIEM on Amazon ES環境設定手順
 
 ## 1. ドキュメント作成者
 
-CM) FEL 松原貞徳　(smatsubara@fel.t.u-tokyo.ac.jp)
+CM) のんピ(のんピのメールアドレス)
 
 ## 2. 改訂履歴
 
 - 1.0:
-  - 作成日時: 2025-04-28 13:28:45
+  - 作成日時: 2021-07-12 13:48:45
   - 更新内容: 初版作成
 
 ## 3. このドキュメントの目次
 
 - [1. ドキュメント作成者](#1-ドキュメント作成者)
 - [2. 改訂履歴](#2-改訂履歴)
-- [3. 目次](#3-目次)
-- [4. 目的・概要](#4-目的概要)
+- [3. このドキュメントの目次](#3-このドキュメントの目次)
+- [4. このドキュメントの目的・概要](#4-このドキュメントの目的概要)
 - [5. 前提条件](#5-前提条件)
 - [6. 作業完了条件](#6-作業完了条件)
 - [7. 作業者](#7-作業者)
@@ -39,17 +39,37 @@ CM) FEL 松原貞徳　(smatsubara@fel.t.u-tokyo.ac.jp)
 
 ## 4. このドキュメントの目的・概要
 
-エアリフト令和7年度研究目標達成のための参考資料。特に、シミュレーションを行い、必要に応じて動画を作成したり、任意の位置にTransducerを配置できるようになる狙いがある。
+株式会社XXXXX様(以下XXX)のSIEM on Amazon ESの環境設定を行うための手順書。  
+既存お客様環境にはログ集約の仕組みはないため、新規にSIEM on Amazon ESをVPC上にデプロイし、SIEM on Amazon ESにログを集約し、分析する。
 
+なお、本作業ではSIEM on Amazon ES用AWSアカウント(`123456789012`)以外のAWSアカウント上のリソースからのログ集約は行わない。
 
-シミュレーションのイメージ図は以下の通り。  
+設定範囲は以下の通り。  
 
-![abstruct of simulation](./pictures/multicombined_visualization_transparent.png)
+![全体構成図](./images/全体構成図.png)
 
 設定するリソースは以下の通り。
-matlab 
-kwave toolbox
-gpu machine 
+
+- VPC: 1
+- VPC Flow Logs: 1
+- DHCP Options Sets: 1
+- Subnet: 6
+- Route Table: 6
+- Internet Gateway: 1
+- NAT Gateway: 1
+- Elastic IP IP: 2
+- Security Group: 2
+- Network ACL: 1
+- EC2 Instance: 1
+- EBS Volume: 1
+- CloudTrail: 1
+- Secrutiy Hub: 1
+- GuardDuty: 1
+- IAM Access Analyzer: 1
+- CloudWatch Logs
+- Kinesis Data Firehose: 2
+- SIEM on Amazon ES: 1
+  - SIEM on Amazon ESをデプロイ時に作成されるリソースは、[SIEM on Amazon ESの公式ドキュメント](https://github.com/aws-samples/siem-on-amazon-elasticsearch-service/blob/main/README_ja.md#%E4%BD%9C%E6%88%90%E3%81%95%E3%82%8C%E3%82%8B-aws-%E3%83%AA%E3%82%BD%E3%83%BC%E3%82%B9)を参照
 
 ## 5. 前提条件
 
@@ -59,38 +79,41 @@ gpu machine
 
 ## 6. 作業完了条件
 
-- abstruct of simulationの図を自分で生成し、Transducerを任意の位置に配置したりガラス球の配置を変更できるようになること。
+- 全てのリソースの作成が完了する。
 - 作業者及び、副作業者が[BacklogのWikiに記載したパラメーターシート](URL)と実機とを見比べて、誤った設定がされていないと確認できる。
 
 ## 7. 作業者
 
-CM) 
+CM) のんピ(のんピのメールアドレス)
 
 ## 8. 副作業者 (チェッカー)
 
-CM) 
+CM) チバユキ(チバユキさんのメールアドレス)
 
 ## 9. 作業場所
 
-東京大学工学部2号館　6階　61A4
+岩本町ツインビル 7階
 
 ## 10. 作業端末
 
-jacob@fel.t.u-tokyo.ac.jp
+自端末(MacBook Pro 13-inch, 2020)
 
 ## 11. 予定作業時間
 
-undefined
+2021-07-14 09:00 〜 2021-07-14 16:00
 
 ## 12. その他制約事項・備考
 
-- 海技研・産総研で行われた実験条件に基づいてシミュレーションを実行している。これらのGrid数や刻み幅・時間は計算機の制約から逆算して考えており、あまり変更しないことを勧める。また、数々の物性値に関しては詳細な検討・検証が必要であり、チェッカーによる承認が臨まれる。参考資料・情報に関しては[参考情報](## 13. 参考情報)を検証されたい。
+- [お客様のBacklog](URL)は、IPアドレス制限をしているため、アクセスする際は、[こちらの手順](URL) を参考にVPN接続をすること。
+- リソースの設定が出来次第、対応するBacklogの課題のステータスを`処理済み`に変更すること。
+- 全ての作業が完了したら、XXX)xx様、XXX)yy様に連絡すること。
+- **意図しない事象に遭遇した場合は、CM)チバユキさんに連絡すること。**
 
 ## 13. 参考情報
 
-- [水の減衰係数に関する議論（page 218）](https://jontalle.web.engr.illinois.edu/MISC/Books/KinslerFreyCoopSanders.00.pdf)
-- [ガラスの減衰係数に関する議論](https://pubs.aip.org/asa/jasa/article-pdf/123/4/EL39/14693501/el39_1_online.pdf)
-- [塩ビ管の減衰係数に関する議論](https://www.ondacorp.com/images/Plastics.pdf)
+- [XXX他プロジェクト(XXXX)のBacklog](URL)
+- [パラメーターシート](URL)
+- [SIEM on Amazon ES公式ドキュメント](https://github.com/aws-samples/siem-on-amazon-elasticsearch-service/blob/main/README_ja.md)
 
 ## 14. 作業実績
 
@@ -201,3 +224,4 @@ NGだった場合、以下に 原因解消のために次に行うべきアク�
 - **実行結果: 成功**と表示され、`詳細`をクリックすると、**YYYY-MM-DD HH:MM:SSまで権限が与えられます**といった文章が表示されることを確認する。
 - [ ] ブラウザの拡張機能のAWS Extend Switch Rolesから、`cm-XXX-Read`をクリックする。
 - [ ] マネジメントコンソール上部のメニューの`cm-XXX-Admin`をクリックし、アカウントが、XXX様のSIEM on Amazon ES用のAWSアカウントIDの`123456789012`であることを確認する。
+
