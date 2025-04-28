@@ -1,5 +1,5 @@
 % =========================================================================
-% k-Wave transducer tutorial
+% k-Wave solid-liquid tutorial 
 % =========================================================================
 clearvars;
 close all;
@@ -147,7 +147,7 @@ input_args = {'DisplayMask', display_mask, ...
 sensor.record = {'p','p_max'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, transducer_trans, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
