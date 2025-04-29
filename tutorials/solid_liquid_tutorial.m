@@ -161,7 +161,14 @@ save(fullfile(save_path, 'solid_liquid_tutorial.mat'), ...
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-
+scan_line = transducer_trans.scan_line(sensor_data);
+figure(1);
+plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Signal from Transducer 1');
+grid on;
+saveas(gcf, fullfile(save_path, 'Transducer1_Signal.png'));
 
 % Method 3: Alternative visualization using isosurface
 figure(3);
