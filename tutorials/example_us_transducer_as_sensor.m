@@ -29,7 +29,7 @@ clearvars;
 
 % simulation settings
 DATA_CAST = 'gpuArray-single';
-config = jsondecode(fileread('../config.json'));
+config = jsondecode(fileread('config_tutorial.json'));
 save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
@@ -137,7 +137,7 @@ input_args = {'DisplayMask', transducer.active_elements_mask, ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, source, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, source, transducer, input_args{:});
 
 % extract a single scan line from the sensor data using the current
 % beamforming settings
