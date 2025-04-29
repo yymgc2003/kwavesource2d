@@ -141,8 +141,6 @@ sensor_y = Ny/2 + config.sensor.y_offset;
 %end
 display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask | glass_mask;
 input_args = {'DisplayMask', display_mask, ...
-    'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'solid_liquid_tutorial.avi'), ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 sensor.record = {'p','p_max'};
 
@@ -166,7 +164,8 @@ figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
-title('Signal from Transducer 1');
+ylim([-1 1]);
+title('Signal from Transducer trans');
 grid on;
 saveas(gcf, fullfile(save_path, 'signal_solid_liquid_tutorial.png'));
 

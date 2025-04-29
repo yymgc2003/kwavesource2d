@@ -1,5 +1,5 @@
 % =========================================================================
-% k-Wave liquid tutorial (GPU,no movie) 
+% k-Wave liquid -only tutorial (GPU,no movie) 
 % =========================================================================
 clearvars;
 close all;
@@ -7,7 +7,7 @@ DATA_CAST = 'gpuArray-single';
 % -------------------------------------------------------------------------
 % 1) 設定ファイルの読み込み
 % -------------------------------------------------------------------------
-config = jsondecode(fileread('config_tutorial.json'));
+config = jsondecode(fileread('config.json'));
 USE_STATISTICS = true;
 % -------------------------------------------------------------------------
 % 2) シミュレーション用グリッドの定義
@@ -28,14 +28,6 @@ medium.density     = config.medium.water.density     * ones(Nx,Ny,Nz,'single');
 medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx,Ny,Nz,'single');
 medium.alpha_power = config.medium.water.alpha_power;
 kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
-cx = Nx/2; cy = Ny/2; cz = Nz/2;
-radius_pts = round(2.5e-3 / dx);   
-glass_mask1 = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
-glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy+40, cz-40, radius_pts);
-glass_mask3 = makeBall(Nx, Ny, Nz, cx-30, cy-40, cz+40, radius_pts);
-glass_mask4 = makeBall(Nx, Ny, Nz, cx+30, cy-40, cz+40, radius_pts);
-glass_mask5 = makeBall(Nx, Ny, Nz, cx-20, cy-20, cz-20, radius_pts);
-glass_mask = glass_mask1 | glass_mask2 | glass_mask3 | glass_mask4 | glass_mask5;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
@@ -94,12 +86,6 @@ medium.density(pipe_mask == 1) = config.medium.vinyl.density;
 medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 %medium.alpha_power(pipe_mask) = config.medium.vinyl.alpha_power;
 
-% comment out these 3 lines because it simulates no-solid condition
-
-%medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
-%medium.density(glass_mask == 1) = config.medium.glass.density;
-%medium.alpha_coeff(glass_mask) = config.medium.glass.alpha_coeff;
-%medium.alpha_power(glass_mask) = config.medium.glass.alpha_power;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
@@ -153,7 +139,12 @@ sensor.record = {'p','p_max'};
 
 % run the simulation
 sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
-
+save(fullfile(save_path, 'liquid_only.mat'), ...
+    'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
+    'kgrid', ...                 % グリッド情報
+    't_array', ...               % 時間配列
+    'source_signal', ...         % 入力信号
+    '-v7.3');                    % 大きなデータセット用に-v7.3フォーマットを使用
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
@@ -163,7 +154,8 @@ figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
-title('Signal from Transducer 1');
+ylim([-1 1]);
+title('Signal from Transducer trans');
 grid on;
 saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial.png'));
 % Method 3: Alternative visualization using isosurface
@@ -177,7 +169,6 @@ grid on;
 saveas(gcf, fullfile(save_path, 'source_signal.png'));
 figure(3);
 % Convert logical masks to double for visualization
-glass_mask_double = double(glass_mask);
 transducer_mask_double = double(transducer.active_elements_mask);
 transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
 pipe_mask_double = double(pipe_mask);
@@ -204,5 +195,5 @@ view(80, 30);
 camlight;
 lighting gouraud;
 axis([1 size(transducer_mask,1) 1 size(transducer_mask,2) 1 size(transducer_mask,3)]);
-title('Liquid with Solid particles experimental settings');
+title('Liquid only experimental settings');
 saveas(gcf, fullfile(save_path, 'liquid_only_tutorial.png'));
