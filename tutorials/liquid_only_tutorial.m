@@ -125,14 +125,7 @@ for n = 0:config.source.max_n
 end
 transducer.input_signal = source_signal;
 
-% Plot the source signal
-figure(4);
-plot(kgrid.t_array * 1e6, source_signal * 1e-6, 'r-');
-xlabel('Time [\mus]');
-ylabel('Pressure [MPa]');
-title('Source Signal');
-grid on;
-saveas(gcf, fullfile(save_path, 'source_signal.png'));
+
 
 % -------------------------------------------------------------------------
 % 6) トランスデューサーの初期化
@@ -176,6 +169,14 @@ title('Signal from Transducer 1');
 grid on;
 saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial.png'));
 % Method 3: Alternative visualization using isosurface
+% % Plot the source signal
+figure(2);
+plot(kgrid.t_array * 1e6, source_signal * 1e-6, 'r-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Source Signal');
+grid on;
+saveas(gcf, fullfile(save_path, 'source_signal.png'));
 figure(3);
 % Convert logical masks to double for visualization
 glass_mask_double = double(glass_mask);
