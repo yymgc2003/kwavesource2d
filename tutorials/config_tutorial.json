@@ -79,5 +79,5 @@
         "pml_alpha": 2,
         "CFL": 0.05
     },
-    "save_path": "/mnt/matsubara/rawdata"
+    "save_path": "/mnt/sdb/matsubara/raw_singal"
 } 
