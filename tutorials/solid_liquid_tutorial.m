@@ -147,7 +147,16 @@ input_args = {'DisplayMask', display_mask, ...
 sensor.record = {'p','p_max'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
+% シミュレーション実行
+sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
+
+% データを.matファイルとして保存
+saveas(fullfile(save_path, 'simulation_data.mat'), ...
+    'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
+    'kgrid', ...                 % グリッド情報
+    't_array', ...               % 時間配列
+    'source_signal', ...         % 入力信号
+    '-v7.3');                    % 大きなデータセット用に-v7.3フォーマットを使用
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
@@ -184,4 +193,4 @@ camlight;
 lighting gouraud;
 axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
 title('Combined Visualization (Transparent Pipe)');
-saveas(gcf, fullfile(save_path, 'multicombined_visualization_transparent.png'));
+saveas(gcf, fullfile(save_path, 'solid_liquid_tutorial.png'));
