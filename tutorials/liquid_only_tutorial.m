@@ -180,7 +180,7 @@ pipe_only_mask = pipe_mask_double;
 % Create isosurface plots
 % Glass and transducers (solid)
 p1 = patch(isosurface(transducer_mask, 0.5));
-isonormals(glass_transducer_mask, p1);
+isonormals(transducer_mask, p1);
 set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
 
 % Pipe (transparent)
@@ -193,6 +193,6 @@ daspect([1 1 1]);
 view(80, 30);
 camlight;
 lighting gouraud;
-axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
+axis([1 size(transducer_mask,1) 1 size(transducer_mask,2) 1 size(transducer_mask,3)]);
 title('Combined Visualization (Transparent Pipe)');
 saveas(gcf, fullfile(save_path, 'liquidonly.png'));
