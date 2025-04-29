@@ -104,7 +104,7 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
 % Define source signal parameters
-source_strength = 1e6;          % [Pa]
+source_strength = 0.1e6;          % [Pa]
 tone_burst_freq = 4e6;        % [Hz]
 tone_burst_cycles = 4;
 source_signal = zeros(size(kgrid.t_array));
@@ -156,7 +156,7 @@ sensor_y = Ny/2 + config.sensor.y_offset;
 display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask;
 input_args = {'DisplayMask', display_mask, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'vinyl_pipe_3d.avi'), ...
+    'MovieName', fullfile(save_path, 'liquid_only_tutorial.avi'), ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 sensor.record = {'p','p_max'};
 
@@ -174,7 +174,7 @@ xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Signal from Transducer 1');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquidonly.png'));
+saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial.png'));
 % Method 3: Alternative visualization using isosurface
 figure(3);
 % Convert logical masks to double for visualization
