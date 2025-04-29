@@ -72,12 +72,12 @@
         }
     },
     "simulation": {
-        "t_end": 1000e-6,
+        "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
         "CFL": 0.05
     },
-    "save_path": "/home/matsubara/Scripts/tmp"
+    "save_path": "/mnt/sdb/matsubara/raw_singal"
 } 

@@ -168,8 +168,16 @@ xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Signal from Transducer 1');
 grid on;
-saveas(gcf, fullfile(save_path, 'Transducer1_Signal.png'));
+saveas(gcf, fullfile(save_path, 'signal_solid_liquid_tutorial.png'));
 
+% Plot the source signal
+figure(2);
+plot(kgrid.t_array * 1e6, source_signal * 1e-6, 'r-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Source Signal');
+grid on;
+saveas(gcf, fullfile(save_path, 'source_signal.png'));
 % Method 3: Alternative visualization using isosurface
 figure(3);
 % Convert logical masks to double for visualization

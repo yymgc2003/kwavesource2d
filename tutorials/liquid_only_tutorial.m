@@ -103,6 +103,7 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
+% Define source signal parameters
 source_strength = 1e6;          % [Pa]
 tone_burst_freq = 4e6;        % [Hz]
 tone_burst_cycles = 4;
@@ -110,6 +111,7 @@ source_signal = zeros(size(kgrid.t_array));
 T_prf = 1 / config.source.prf;
 t_array = kgrid.t_array;
 
+% Generate source signal with multiple pulses
 for n = 0:config.source.max_n
     t_start = n * T_prf;
     t_end = t_start + config.source.pulse_length;
@@ -122,6 +124,15 @@ for n = 0:config.source.max_n
     source_signal(idx_on) = config.source.magnitude * sin(2*pi * config.source.frequency * (t_array(idx_on) - t_start));
 end
 transducer.input_signal = source_signal;
+
+% Plot the source signal
+figure(4);
+plot(kgrid.t_array * 1e6, source_signal * 1e-6, 'r-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Source Signal');
+grid on;
+saveas(gcf, fullfile(save_path, 'source_signal.png'));
 
 % -------------------------------------------------------------------------
 % 6) トランスデューサーの初期化
@@ -163,7 +174,7 @@ xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Signal from Transducer 1');
 grid on;
-saveas(gcf, fullfile(save_path, 'Transducer1_Signal.png'));
+saveas(gcf, fullfile(save_path, 'signal_liquidonly.png'));
 % Method 3: Alternative visualization using isosurface
 figure(3);
 % Convert logical masks to double for visualization
