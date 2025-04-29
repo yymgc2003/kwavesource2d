@@ -94,9 +94,11 @@ medium.density(pipe_mask == 1) = config.medium.vinyl.density;
 medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 %medium.alpha_power(pipe_mask) = config.medium.vinyl.alpha_power;
 
-medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
-medium.density(glass_mask == 1) = config.medium.glass.density;
-medium.alpha_coeff(glass_mask) = config.medium.glass.alpha_coeff;
+% comment out these 3 lines because it simulates no-solid condition
+
+%medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
+%medium.density(glass_mask == 1) = config.medium.glass.density;
+%medium.alpha_coeff(glass_mask) = config.medium.glass.alpha_coeff;
 %medium.alpha_power(glass_mask) = config.medium.glass.alpha_power;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
@@ -139,7 +141,8 @@ sensor_y = Ny/2 + config.sensor.y_offset;
 %if ~USE_STATISTICS
 %    input_args = [input_args {'StreamToDisk', 100}];
 %end
-display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask | glass_mask;
+%display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask | glass_mask;
+display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask;
 input_args = {'DisplayMask', display_mask, ...
     'RecordMovie', true, ...
     'MovieName', fullfile(save_path, 'vinyl_pipe_3d.avi'), ...
@@ -153,7 +156,14 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, i
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
 
-
+scan_line = transducer_trans.scan_line(sensor_data);
+figure(1);
+plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
+xlabel('Time [\mus]');
+ylabel('Pressure [MPa]');
+title('Signal from Transducer 1');
+grid on;
+saveas(gcf, fullfile(save_path, 'Transducer1_Signal.png'));
 % Method 3: Alternative visualization using isosurface
 figure(3);
 % Convert logical masks to double for visualization
@@ -163,12 +173,13 @@ transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
 pipe_mask_double = double(pipe_mask);
 
 % Create separate masks for visualization
-glass_transducer_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
+%glass_transducer_mask = glass_mask_double + transducer_mask_double + transducer_trans_mask_double;
+transducer_mask = transducer_mask_double + transducer_trans_mask_double;
 pipe_only_mask = pipe_mask_double;
 
 % Create isosurface plots
 % Glass and transducers (solid)
-p1 = patch(isosurface(glass_transducer_mask, 0.5));
+p1 = patch(isosurface(transducer_mask, 0.5));
 isonormals(glass_transducer_mask, p1);
 set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
 
@@ -184,4 +195,4 @@ camlight;
 lighting gouraud;
 axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
 title('Combined Visualization (Transparent Pipe)');
-saveas(gcf, fullfile(save_path, 'solid_liquid_tutorial.png'));
+saveas(gcf, fullfile(save_path, 'liquidonly.png'));
