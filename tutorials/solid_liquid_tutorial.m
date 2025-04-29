@@ -151,7 +151,7 @@ sensor.record = {'p','p_max'};
 sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % データを.matファイルとして保存
-saveas(fullfile(save_path, 'simulation_data.mat'), ...
+save(fullfile(save_path, 'solid_liquid_tutorial.mat'), ...
     'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
     'kgrid', ...                 % グリッド情報
     't_array', ...               % 時間配列
