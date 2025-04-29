@@ -142,7 +142,7 @@ sensor_y = Ny/2 + config.sensor.y_offset;
 display_mask = transducer.active_elements_mask | transducer_trans.active_elements_mask | pipe_mask | glass_mask;
 input_args = {'DisplayMask', display_mask, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'vinyl_pipe_3d.avi'), ...
+    'MovieName', fullfile(save_path, 'solid_liquid_tutorial.avi'), ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
 sensor.record = {'p','p_max'};
 
@@ -207,5 +207,5 @@ view(80, 30);
 camlight;
 lighting gouraud;
 axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
-title('Combined Visualization (Transparent Pipe)');
+title('Liquid with Solid particles experimental settings');
 saveas(gcf, fullfile(save_path, 'solid_liquid_tutorial.png'));

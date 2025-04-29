@@ -205,5 +205,5 @@ view(80, 30);
 camlight;
 lighting gouraud;
 axis([1 size(transducer_mask,1) 1 size(transducer_mask,2) 1 size(transducer_mask,3)]);
-title('Combined Visualization (Transparent Pipe)');
-saveas(gcf, fullfile(save_path, 'liquidonly.png'));
+title('Liquid with Solid particles experimental settings');
+saveas(gcf, fullfile(save_path, 'liquid_only_tutorial.png'));
