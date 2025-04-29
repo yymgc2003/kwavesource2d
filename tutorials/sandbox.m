@@ -44,7 +44,7 @@ glass_mask = glass_mask1 | glass_mask2 | glass_mask3 | glass_mask4 | glass_mask5
 transducer.number_elements = 90;    % total number of transducer elements
 transducer.element_width = 1;       % width of each element [grid points/voxels]
 transducer.element_length = 12;     % length of each element [grid points/voxels]
-transducer.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer.element_spacing = 0;     % spacing (kerf width) between the elements [grid points/voxels]
 transducer.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
@@ -61,20 +61,19 @@ transducer.active_elements(21:52) = 1;
 transducer_trans.number_elements = 90;    % total number of transducer elements
 transducer_trans.element_width = 1;       % width of each element [grid points/voxels]
 transducer_trans.element_length = 12;     % length of each element [grid points/voxels]
-transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer_trans.element_spacing = 0;     % spacing (kerf width) between the elements [grid points/voxels]
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
-transducer_width = transducer.number_elements * transducer.element_width ...
-    + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
+transducer_width = transducer_trans.number_elements * transducer_trans.element_width ...
+    + (transducer_trans.number_elements - 1) * transducer_trans.element_spacing;
+transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer_trans.element_length/2]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
 transducer_trans.steering_angle = 0;
 transducer_trans.transmit_apodization = 'Rectangular';
 transducer_trans.receive_apodization = 'Rectangular';
-transducer_trans.active_elements = zeros(transducer.number_elements, 1);
+transducer_trans.active_elements = zeros(transducer_trans.number_elements, 1);
 transducer_trans.active_elements(21:52) = 1;
-
 
 cx = Nx/2;            % X 方向の中心
 cy = Ny/2;            % Y 方向の中心
