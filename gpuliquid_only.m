@@ -90,7 +90,7 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
 % Define source signal parameters
-source_strength = 0.1e6;          % [Pa]
+source_strength = 1e6;          % [Pa]
 tone_burst_freq = 4e6;        % [Hz]
 tone_burst_cycles = 4;
 source_signal = zeros(size(kgrid.t_array));
