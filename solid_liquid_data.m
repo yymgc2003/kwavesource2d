@@ -37,7 +37,7 @@ glass_mask4 = makeBall(Nx, Ny, Nz, cx+30, cy-40, cz+40, radius_pts);
 glass_mask5 = makeBall(Nx, Ny, Nz, cx-20, cy-20, cz-20, radius_pts);
 glass_mask6 = makeBall(Nx, Ny, Nz, cx-50, cy, cz, radius_pts);
 glass_mask7 = makeBall(Nx, Ny, Nz, cx+50, cy, cz, radius_pts);
-glass_mask = glass_mask1 | glass_mask2 | glass_mask3 | glass_mask4 | glass_mask5;
+glass_mask = glass_mask1 | glass_mask6 | glass_mask7;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
@@ -151,7 +151,7 @@ sensor.record = {'p','p_max'};
 sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % データを.matファイルとして保存
-save(fullfile(save_path, 'solid_liquid.mat'), ...
+save(fullfile(save_path, 'solid_liquid_data_3.mat'), ...
     'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
     'kgrid', ...                 % グリッド情報
     't_array', ...               % 時間配列
@@ -169,7 +169,7 @@ ylabel('Pressure [MPa]');
 ylim([-1 1]);
 title('Signal from Transducer trans');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_solid_liquid_tutorial.png'));
+saveas(gcf, fullfile(save_path, 'signal_solid_liquid_3.png'));
 
 % Plot the source signal
 figure(2);
@@ -209,4 +209,4 @@ camlight;
 lighting gouraud;
 axis([1 size(glass_transducer_mask,1) 1 size(glass_transducer_mask,2) 1 size(glass_transducer_mask,3)]);
 title('Liquid with Solid particles experimental settings');
-saveas(gcf, fullfile(save_path, 'solid_liquid_tutorial.png'));
+saveas(gcf, fullfile(save_path, 'solid_liquid_3.png'));
