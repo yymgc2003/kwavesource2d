@@ -35,8 +35,8 @@ glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy+40, cz-40, radius_pts);
 glass_mask3 = makeBall(Nx, Ny, Nz, cx-30, cy-40, cz+40, radius_pts);
 glass_mask4 = makeBall(Nx, Ny, Nz, cx+30, cy-40, cz+40, radius_pts);
 glass_mask5 = makeBall(Nx, Ny, Nz, cx-20, cy-20, cz-20, radius_pts);
-glass_mask6 = makeBall(Nx, Ny, Nz, cx-50, cy, cz, radius_pts);
-glass_mask7 = makeBall(Nx, Ny, Nz, cx+50, cy, cz, radius_pts);
+glass_mask6 = makeBall(Nx, Ny, Nz, cx-40, cy, cz, radius_pts);
+glass_mask7 = makeBall(Nx, Ny, Nz, cx+40, cy, cz, radius_pts);
 glass_mask = glass_mask1 | glass_mask6 | glass_mask7;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
@@ -65,7 +65,7 @@ transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the el
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
+transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2+1]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
@@ -148,10 +148,10 @@ sensor.record = {'p','p_max'};
 
 % run the simulation
 % シミュレーション実行
-sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
+sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
 
 % データを.matファイルとして保存
-save(fullfile(save_path, 'solid_liquid_data_3.mat'), ...
+save(fullfile(save_path, 'solid_liquid_data_reflection3.mat'), ...
     'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
     'kgrid', ...                 % グリッド情報
     't_array', ...               % 時間配列
@@ -161,7 +161,7 @@ save(fullfile(save_path, 'solid_liquid_data_3.mat'), ...
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-scan_line = transducer_trans.scan_line(sensor_data);
+scan_line = transducer.scan_line(sensor_data);
 figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
@@ -169,7 +169,7 @@ ylabel('Pressure [MPa]');
 ylim([-1 1]);
 title('Signal from Transducer trans');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_solid_liquid_3.png'));
+saveas(gcf, fullfile(save_path, 'signal_solid_liquid_reflection3.png'));
 
 % Plot the source signal
 figure(2);
