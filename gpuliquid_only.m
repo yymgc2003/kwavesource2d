@@ -20,9 +20,7 @@ save_path = config.save_path;
 % -------------------------------------------------------------------------
 % 3) 媒質パラメータ
 % -------------------------------------------------------------------------
-%medium.sound_speed = config.medium.water.sound_speed;
-%medium.density = config.medium.water.density;
-%medium.alpha_coeff = config.medium.water.alpha_coeff;
+
 medium.sound_speed = config.medium.water.sound_speed * ones(Nx,Ny,Nz,'single');
 medium.density     = config.medium.water.density     * ones(Nx,Ny,Nz,'single');
 medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx,Ny,Nz,'single');
@@ -91,29 +89,28 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 % -------------------------------------------------------------------------
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
-% Define source signal parameters
-source_strength = 1e6;          % [Pa]
-tone_burst_freq = 4e6;        % [Hz]
-tone_burst_cycles = 4;
+
+base_signal = toneBurst(1/kgrid.dt, config.source.tone_burst_freq, config.source.tone_burst_cycles);
+base_signal = (config.source.source_strength ./ (config.medium.water.sound_speed * config.medium.water.density)) .* base_signal;
+
 source_signal = zeros(size(kgrid.t_array));
-T_prf = 1 / config.source.prf;
-t_array = kgrid.t_array;
+T_prf = 1 / config.source.prf;  
+burst_length = length(base_signal);
+dt = kgrid.dt;
+burst_time = burst_length * dt;
 
 % Generate source signal with multiple pulses
 for n = 0:config.source.max_n
-    t_start = n * T_prf;
-    t_end = t_start + config.source.pulse_length;
-    
-    if t_start > kgrid.t_array(end)
+    t_start_idx = round(n * T_prf / dt) + 1;
+    if t_start_idx > length(kgrid.t_array)
         break;
     end
     
-    idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = config.source.magnitude * sin(2*pi * config.source.frequency * (t_array(idx_on) - t_start));
+    end_idx = min(t_start_idx + burst_length - 1, length(source_signal));
+    signal_length = end_idx - t_start_idx + 1;
+    source_signal(t_start_idx:end_idx) = base_signal(1:signal_length);
 end
 transducer.input_signal = source_signal;
-
-
 
 
 % -------------------------------------------------------------------------
@@ -137,17 +134,17 @@ sensor_y = Ny/2 + config.sensor.y_offset;
 %display_mask = transducer.active_elements_mask | transducer3.active_elements_mask | pipe_mask | glass_mask;
 display_mask = transducer.active_elements_mask | transducer3.active_elements_mask | pipe_mask;
 input_args = {'DisplayMask', display_mask, ...
-    'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * source_strength};
+    'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * config.source.source_strength};
 sensor.record = {'p','p_max'};
 
 % run the simulation
 sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
-save(fullfile(save_path, 'liquid_only_ref.mat'), ...
-    'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
-    'kgrid', ...                 % グリッド情報
-    't_array', ...               % 時間配列
-    'source_signal', ...         % 入力信号
-    '-v7.3');                    % 大きなデータセット用に-v7.3フォーマットを使用
+%save(fullfile(save_path, 'liquid_only_ref.mat'), ...
+%    'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
+%   'kgrid', ...                 % グリッド情報
+%   'kgrid.t_array', ...               % 時間配列
+%    'source_signal', ...         % 入力信号
+%    '-v7.3');                    % 大きなデータセット用に-v7.3フォーマットを使用
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
@@ -160,7 +157,7 @@ ylabel('Pressure [MPa]');
 ylim([-1 1]);
 title('Signal from Transducer reflection');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_refrection.png'));
+saveas(gcf, fullfile(save_path, 'signal_liquid_only_reflection.png'));
 % Method 3: Alternative visualization using isosurface
 % % Plot the source signal
 figure(2);
@@ -200,3 +197,11 @@ lighting gouraud;
 axis([1 size(transducer_mask,1) 1 size(transducer_mask,2) 1 size(transducer_mask,3)]);
 title('Liquid only experimental settings');
 saveas(gcf, fullfile(save_path, 'liquid_only.png'));
+
+figure;
+stackedPlot(kgrid.t_array * 1e6, sensor_data);
+xlabel('Time [\mus]');
+ylabel('Transducer Element');
+title('Recorded Pressure');
+scaleFig(1, 1.5);
+saveas(gcf, fullfile(save_path, 'signal_liquid_only_Transducer_Element.png'));

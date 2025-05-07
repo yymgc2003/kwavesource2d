@@ -148,7 +148,7 @@ sensor.record = {'p','p_max'};
 
 % run the simulation
 % シミュレーション実行
-sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
+%sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % データを.matファイルとして保存

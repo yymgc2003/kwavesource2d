@@ -45,11 +45,13 @@
     "source": {
         "distance_pipe_source": 0.05,
         "diameter": 0.009,
-        "frequency": 4e6,
+        "tone_burst_freq": 4e6,
         "magnitude": 1,
+        "source_strength":1e6,
         "prf": 3000,
         "pulse_length": 1e-6,
-        "max_n": 1000
+        "max_n": 1000,
+        "tone_burst_cycles": 4
     },
     "pipe": {
         "center_x_offset": 160,
@@ -79,5 +81,5 @@
         "pml_alpha": 2,
         "CFL": 0.05
     },
-    "save_path": "/mnt/sdb/matsubara/tmp"
+    "save_path": "/mnt/matsubara/rawdata"
 } 
