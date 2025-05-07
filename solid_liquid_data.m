@@ -148,7 +148,7 @@ sensor.record = {'p','p_max'};
 
 % run the simulation
 % シミュレーション実行
-sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
+sensor_data= kspaceFirstOrder3DG(kgrid, medium, transducer, transducer_trans, input_args{:});
 
 % データを.matファイルとして保存
 save(fullfile(save_path, 'solid_liquid_data_reflection3.mat'), ...
@@ -161,7 +161,7 @@ save(fullfile(save_path, 'solid_liquid_data_reflection3.mat'), ...
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
-scan_line = transducer.scan_line(sensor_data);
+scan_line = transducer_trans.scan_line(sensor_data);
 figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
@@ -169,7 +169,7 @@ ylabel('Pressure [MPa]');
 ylim([-1 1]);
 title('Signal from Transducer trans');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_solid_liquid_reflection3.png'));
+saveas(gcf, fullfile(save_path, 'signal_solid_liquid_trans3.png'));
 
 % Plot the source signal
 figure(2);

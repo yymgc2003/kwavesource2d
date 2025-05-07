@@ -1,7 +1,7 @@
 {
     "grid": {
-        "Nx": 512,
-        "Ny": 512,
+        "Nx": 640,
+        "Ny": 640,
         "Nz": 128,
         "dx": 0.1875e-3,
         "dy": 0.1875e-3,
@@ -72,7 +72,7 @@
         }
     },
     "simulation": {
-        "t_end": 100e-6,
+        "t_end": 150e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
