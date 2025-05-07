@@ -29,7 +29,7 @@ clearvars;
 
 % simulation settings
 DATA_CAST = 'gpuArray-single';
-config = jsondecode(fileread('config_tutorial.json'));
+config = jsondecode(fileread('../tutorials/config_tutorial.json'));
 save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
