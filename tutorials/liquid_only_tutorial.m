@@ -154,20 +154,20 @@ input_args = {'DisplayMask', display_mask, ...
 sensor.record = {'p','p_max'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, transducer_trans, input_args{:});
+sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
 
-scan_line = transducer_trans.scan_line(sensor_data);
+scan_line = transducer.scan_line(sensor_data);
 figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
 title('Signal from Transducer 1');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial.png'));
+saveas(gcf, fullfile(save_path, 'signal_liquid_only_ref_tutorial.png'));
 % Method 3: Alternative visualization using isosurface
 % % Plot the source signal
 figure(2);

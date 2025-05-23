@@ -3,16 +3,22 @@
 % =========================================================================
 clearvars;
 close all;
+addpath(fullfile(fileparts(mfilename('fullpath')), 'src'));
 DATA_CAST = 'gpuArray-single';
 % -------------------------------------------------------------------------
 % 1) 設定ファイルの読み込み
 % -------------------------------------------------------------------------
 config = jsondecode(fileread('config.json'));
-USE_STATISTICS = true;
+%USE_STATISTICS = true;
 % -------------------------------------------------------------------------
 % 2) シミュレーション用グリッドの定義
 % -------------------------------------------------------------------------
-Nx=config.grid.Nx; Ny=config.grid.Ny; Nz=config.grid.Nz;
+% set the size of the perfectly matched layer (PML)
+PML_X_SIZE = 40;            % [grid points]
+PML_Y_SIZE = 40;            % [grid points]
+PML_Z_SIZE = 20;            % [grid points]
+
+Nx=config.grid.Nx- 2*PML_X_SIZE; Ny=config.grid.Ny - 2*PML_Y_SIZE; Nz=config.grid.Nz- 2*PML_Z_SIZE;
 dx=config.grid.dx; dy=config.grid.dy; dz=config.grid.dz;
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 save_path = config.save_path;
@@ -26,44 +32,41 @@ medium.density     = config.medium.water.density     * ones(Nx,Ny,Nz,'single');
 medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx,Ny,Nz,'single');
 medium.alpha_power = config.medium.water.alpha_power;
 medium.BonA = 6;
-kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
+kgrid.makeTime(medium.sound_speed, 0.03, config.simulation.t_end);
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
-transducer.number_elements = 90;    % total number of transducer elements
-transducer.element_width = 1;       % width of each element [grid points/voxels]
-transducer.element_length = 12;     % length of each element [grid points/voxels]
-transducer.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
-transducer.radius = inf;            % radius of curvature of the transducer [m]
-transducer_width = transducer.number_elements * transducer.element_width ...
-    + (transducer.number_elements - 1) * transducer.element_spacing;
+transducer_transmit.number_elements = 48;    % total number of transducer_transmit elements
+transducer_transmit.element_width = 1;       % width of each element [grid points/voxels]
+transducer_transmit.element_length = 12;     % length of each element [grid points/voxels]
+transducer_transmit.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer_transmit.radius = inf;            % radius of curvature of the transducer_transmit [m]
+transducer_transmit_width = transducer_transmit.number_elements * transducer_transmit.element_width ...
+    + (transducer_transmit.number_elements - 1) * transducer_transmit.element_spacing;
 
-transducer.position = round([55, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
-transducer.sound_speed = config.medium.water.sound_speed;
-transducer.focus_distance = 25e-3;
-transducer.elevation_focus_distance = 19e-3;
-transducer.steering_angle = 0;
-transducer.transmit_apodization = 'Rectangular';
-transducer.receive_apodization = 'Rectangular';
-transducer.active_elements = zeros(transducer.number_elements, 1);
-transducer.active_elements(21:52) = 1;
+transducer_transmit.position = round([PML_X_SIZE+30, Ny/2 - transducer_transmit_width/2, config.grid.Nz/2 - transducer_transmit.element_length/2]);
+transducer_transmit.sound_speed = config.medium.water.sound_speed;
+transducer_transmit.focus_distance = 25e-3;
+transducer_transmit.elevation_focus_distance = Inf;
+transducer_transmit.steering_angle = 0;
+transducer_transmit.transmit_apodization = 'Hanning';
+transducer_transmit.active_elements = zeros(transducer_transmit.number_elements, 1);
+transducer_transmit.active_elements(5:43) = 1;
 
-transducer3.number_elements = 90;    % total number of transducer elements
-transducer3.element_width = 1;       % width of each element [grid points/voxels]
-transducer3.element_length = 12;     % length of each element [grid points/voxels]
-transducer3.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
-transducer3.radius = inf;            % radius of curvature of the transducer [m]
-transducer_width = transducer.number_elements * transducer.element_width ...
-    + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer3.position = round([Nx-55, Ny/2 - transducer_width/2+1, Nz/2 - transducer.element_length/2+1]);
-transducer3.sound_speed = config.medium.water.sound_speed;
-transducer3.focus_distance = 25e-3;
-transducer3.elevation_focus_distance = 19e-3;
-transducer3.steering_angle = 0;
-transducer3.transmit_apodization = 'Rectangular';
-transducer3.receive_apodization = 'Rectangular';
-transducer3.active_elements = zeros(transducer3.number_elements, 1);
-transducer3.active_elements(21:52) = 1;
+transducer_receive.number_elements = 48;    % total number of transducer_transmit elements
+transducer_receive.element_width = 1;       % width of each element [grid points/voxels]
+transducer_receive.element_length = 12;     % length of each element [grid points/voxels]
+transducer_receive.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
+transducer_receive.radius = inf;            % radius of curvature of the transducer_transmit [m]
+transducer_transmit_width = transducer_transmit.number_elements * transducer_transmit.element_width ...
+    + (transducer_transmit.number_elements - 1) * transducer_transmit.element_spacing;
+transducer_receive.position = round([PML_X_SIZE+630, Ny/2 - transducer_transmit_width/2+1, config.grid.Nz/2 - transducer_transmit.element_length/2+1]);
+transducer_receive.sound_speed = config.medium.water.sound_speed;
+transducer_receive.steering_angle = 0;
+transducer_receive.elevation_focus_distance = Inf;
+transducer_receive.receive_apodization = 'Hanning';
+transducer_receive.active_elements = zeros(transducer_receive.number_elements, 1);
+transducer_receive.active_elements(5:43) = 1;
 
 % ビニール円環のマスクを作成 - サイズを調整
 cx = Nx/2;            % X 方向の中心
@@ -83,7 +86,7 @@ ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);   % Nx×Ny logical
 pipe_mask = repmat(ringMask, [1 1 Nz]);   % Nx×Ny×Nz   
 medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
 medium.density(pipe_mask == 1) = config.medium.vinyl.density;
-medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
+%medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 %medium.alpha_power(pipe_mask) = config.medium.vinyl.alpha_power;
 
 % -------------------------------------------------------------------------
@@ -92,53 +95,51 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 
 base_signal = toneBurst(1/kgrid.dt, config.source.tone_burst_freq, config.source.tone_burst_cycles);
 base_signal = (config.source.source_strength ./ (config.medium.water.sound_speed * config.medium.water.density)) .* base_signal;
-
 source_signal = zeros(size(kgrid.t_array));
 T_prf = 1 / config.source.prf;  
 burst_length = length(base_signal);
 dt = kgrid.dt;
 burst_time = burst_length * dt;
 
-% Generate source signal with multiple pulses
-for n = 0:config.source.max_n
-    t_start_idx = round(n * T_prf / dt) + 1;
-    if t_start_idx > length(kgrid.t_array)
-        break;
-    end
-    
-    end_idx = min(t_start_idx + burst_length - 1, length(source_signal));
-    signal_length = end_idx - t_start_idx + 1;
-    source_signal(t_start_idx:end_idx) = base_signal(1:signal_length);
+% 最初のパルスのみを設定
+t_start = 0; % 開始時刻
+idx_start = round(t_start / kgrid.dt) + 1;
+idx_end = idx_start + length(base_signal) - 1;
+
+if idx_end <= length(source_signal)
+    source_signal(idx_start:idx_end) = base_signal;
 end
-transducer.input_signal = source_signal;
+
+transducer_transmit.input_signal = source_signal;
 
 
 % -------------------------------------------------------------------------
 % 6) トランスデューサーの初期化
 % -------------------------------------------------------------------------
-transducer = kWaveTransducer(kgrid, transducer);
-transducer3 = kWaveTransducer(kgrid, transducer3);
-%transducer.properties;
-% -------------------------------------------------------------------------
-% 7) センサーの設定
-% -------------------------------------------------------------------------
-sensor.mask = zeros(Nx, Ny, Ny);
-sensor_x = Nx/2 + config.sensor.x_offset;
-sensor_y = Ny/2 + config.sensor.y_offset;
+transducer_transmit = kWaveTransducer(kgrid, transducer_transmit);
+transducer_receive = kWaveTransducer(kgrid, transducer_receive);
+%transducer_transmit.properties;
+%transducer_receive.properties;
+
 
 % stream the data to disk in blocks of 100 if storing the complete time
 % history 
 %if ~USE_STATISTICS
 %    input_args = [input_args {'StreamToDisk', 100}];
 %end
-%display_mask = transducer.active_elements_mask | transducer3.active_elements_mask | pipe_mask | glass_mask;
-display_mask = transducer.active_elements_mask | transducer3.active_elements_mask | pipe_mask;
+%display_mask = transducer_transmit.active_elements_mask | transducer_receive.active_elements_mask | pipe_mask | glass_mask;
+display_mask = transducer_transmit.active_elements_mask | transducer_receive.active_elements_mask | pipe_mask;
 input_args = {'DisplayMask', display_mask, ...
-    'DataCast', DATA_CAST, 'PlotScale', [-1/4, 1/4] * config.source.source_strength};
-sensor.record = {'p','p_max'};
+    'RecordMovie', true, ...
+    'MovieName', fullfile(save_path, 'liquid_only_d.avi'), ...
+    'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], 'PMLAlpha', 2, ...
+    'PlotScale', [-1/8, 1/8] * source_strength, ...
+    'DataCast', DATA_CAST, ...
+    };  
+
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
 %save(fullfile(save_path, 'liquid_only_ref.mat'), ...
 %    'sensor_data', ...           % 送信用トランスデューサーで記録したデータ
 %   'kgrid', ...                 % グリッド情報
@@ -149,15 +150,8 @@ sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_a
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
 % =========================================================================
 
-scan_line = transducer.scan_line(sensor_data);
-figure(1);
-plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
-xlabel('Time [\mus]');
-ylabel('Pressure [MPa]');
-ylim([-1 1]);
-title('Signal from Transducer reflection');
-grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_reflection.png'));
+scan_line = transducer_transmit.scan_line(sensor_data);
+plotsignalwaveform(kgrid, scan_line, save_path, 'signal_liquid_only_transmit.png');
 % Method 3: Alternative visualization using isosurface
 % % Plot the source signal
 figure(2);
@@ -169,19 +163,19 @@ grid on;
 saveas(gcf, fullfile(save_path, 'source_signal.png'));
 figure(3);
 % Convert logical masks to double for visualization
-transducer_mask_double = double(transducer.active_elements_mask);
-transducer3_mask_double = double(transducer3.active_elements_mask);
+transducer_transmit_mask_double = double(transducer_transmit.active_elements_mask);
+transducer_receive_mask_double = double(transducer_receive.active_elements_mask);
 pipe_mask_double = double(pipe_mask);
 
 % Create separate masks for visualization
-%glass_transducer_mask = glass_mask_double + transducer_mask_double + transducer3_mask_double;
-transducer_mask = transducer_mask_double + transducer3_mask_double;
+%glass_transducer_transmit_mask = glass_mask_double + transducer_transmit_mask_double + transducer_receive_mask_double;
+transducer_transmit_mask = transducer_transmit_mask_double + transducer_receive_mask_double;
 pipe_only_mask = pipe_mask_double;
 
 % Create isosurface plots
-% Glass and transducers (solid)
-p1 = patch(isosurface(transducer_mask, 0.5));
-isonormals(transducer_mask, p1);
+% Glass and transducer_transmits (solid)
+p1 = patch(isosurface(transducer_transmit_mask, 0.5));
+isonormals(transducer_transmit_mask, p1);
 set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
 
 % Pipe (transparent)
@@ -194,14 +188,25 @@ daspect([1 1 1]);
 view(80, 30);
 camlight;
 lighting gouraud;
-axis([1 size(transducer_mask,1) 1 size(transducer_mask,2) 1 size(transducer_mask,3)]);
+axis([1 size(transducer_transmit_mask,1) 1 size(transducer_transmit_mask,2) 1 size(transducer_transmit_mask,3)]);
 title('Liquid only experimental settings');
 saveas(gcf, fullfile(save_path, 'liquid_only.png'));
 
-figure;
-stackedPlot(kgrid.t_array * 1e6, sensor_data);
-xlabel('Time [\mus]');
-ylabel('Transducer Element');
-title('Recorded Pressure');
-scaleFig(1, 1.5);
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_Transducer_Element.png'));
+% センサーデータの形状を確認
+size(sensor_data)
+
+% 必要に応じてリシェイプまたは並べ替え
+if ~ismatrix(sensor_data)
+    sensor_data = reshape(sensor_data, [], size(sensor_data, ndims(sensor_data)));
+end
+
+% stackedPlot を試す
+try
+    stackedPlot(kgrid.t_array * 1e6, sensor_data);
+catch
+    % エラーが発生した場合は基本的なプロットに切り替え
+    figure;
+    plot(kgrid.t_array * 1e6, sensor_data');
+    xlabel('Time [µs]');
+    ylabel('Amplitude');
+end
