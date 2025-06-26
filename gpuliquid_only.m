@@ -131,9 +131,8 @@ transducer_receive = kWaveTransducer(kgrid, transducer_receive);
 display_mask = transducer_transmit.active_elements_mask | transducer_receive.active_elements_mask | pipe_mask;
 input_args = {'DisplayMask', display_mask, ...
     'RecordMovie', true, ...
-    'MovieName', fullfile(save_path, 'liquid_only_d.avi'), ...
+    'MovieName', fullfile(save_path, 'liquid_only.avi'), ...
     'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], 'PMLAlpha', 2, ...
-    'PlotScale', [-1/8, 1/8] * source_strength, ...
     'DataCast', DATA_CAST, ...
     };  
 
@@ -191,22 +190,3 @@ lighting gouraud;
 axis([1 size(transducer_transmit_mask,1) 1 size(transducer_transmit_mask,2) 1 size(transducer_transmit_mask,3)]);
 title('Liquid only experimental settings');
 saveas(gcf, fullfile(save_path, 'liquid_only.png'));
-
-% センサーデータの形状を確認
-size(sensor_data)
-
-% 必要に応じてリシェイプまたは並べ替え
-if ~ismatrix(sensor_data)
-    sensor_data = reshape(sensor_data, [], size(sensor_data, ndims(sensor_data)));
-end
-
-% stackedPlot を試す
-try
-    stackedPlot(kgrid.t_array * 1e6, sensor_data);
-catch
-    % エラーが発生した場合は基本的なプロットに切り替え
-    figure;
-    plot(kgrid.t_array * 1e6, sensor_data');
-    xlabel('Time [µs]');
-    ylabel('Amplitude');
-end

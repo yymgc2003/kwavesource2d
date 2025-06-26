@@ -119,7 +119,7 @@ for n = 0:config.source.max_n
     end
     
     idx_on = (t_array >= t_start) & (t_array < t_end);
-    source_signal(idx_on) = config.source.magnitude * sin(2*pi * config.source.frequency * (t_array(idx_on) - t_start));
+    source_signal(idx_on) = config.source.magnitude * sin(2*pi * config.source.tone_burst_freq * (t_array(idx_on) - t_start));
 end
 transducer.input_signal = source_signal;
 
