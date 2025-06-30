@@ -22,7 +22,9 @@ Nz = config.grid.Nz - 2*PML_Z_SIZE;     % [grid points]
 %x = 40e-3;                  % [m]
 
 % calculate the spacing between the grid points
-
+%dx = x/Nx;                  % [m]
+%dy = dx;                    % [m]
+%dz = dx;                    % [m]
 dx=config.grid.dx; dy=config.grid.dy; dz=config.grid.dz;
 % create the k-space grid
 kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
@@ -142,9 +144,18 @@ medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
 medium.density(pipe_mask == 1) = config.medium.vinyl.density;
 
 % =========================================================================
+% DEFINE glass MASK
+% =========================================================================
+radius_pts = round(2.5e-3 / dx);   
+glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
+glass_mask = glass_mask2;
+medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
+medium.density(glass_mask == 1) = config.medium.glass.density;
+medium.alpha_coeff(glass_mask == 1) = config.medium.glass.alpha_coeff;
+% =========================================================================
 % RUN THE SIMULATION
 % =========================================================================
-display_mask = transducer_transmit.all_elements_mask | pipe_mask;
+display_mask = transducer_transmit.all_elements_mask | pipe_mask | glass_mask;
 % set the input settings
 input_args = {'DisplayMask', display_mask, ...
     'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
@@ -167,7 +178,7 @@ ylabel('Pressure [MPa]');
 ylim([-2 2]);
 title('Signal from Transducer transmit');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial_reflector.png'));
+saveas(gcf, fullfile(save_path, 'signal_solid_liquid_tutorial_reflector.png'));
 
 
 figure(21); clf;
@@ -177,12 +188,12 @@ hold on;
 transmit_mask = permute(transducer_transmit.all_elements_mask, [2,1,3]);
 sensor_mask   = permute(sensor.mask, [2,1,3]);
 pipe_mask_p   = permute(pipe_mask, [2,1,3]);
-
+glass_mask_p   = permute(glass_mask, [2,1,3]);
 % Convert to double for visualization
 transmit_mask_double = double(transmit_mask);
 sensor_mask_double   = double(sensor_mask);
 pipe_mask_double     = double(pipe_mask_p);
-
+glass_mask_double    = double(glass_mask_p);
 % Plot transmit transducer mask (blue)
 if any(transmit_mask_double(:))
     p1 = patch(isosurface(transmit_mask_double, 0.5));
@@ -196,6 +207,11 @@ if any(pipe_mask_double(:))
     isonormals(pipe_mask_double, p3);
     set(p3, 'FaceColor', 'green', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
 end
+if any(glass_mask_double(:))
+    p4 = patch(isosurface(glass_mask_double, 0.3)); % try 0.3 if 0.5 does not work
+    isonormals(glass_mask_double, p4);
+    set(p4, 'FaceColor', 'red', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+end
 
 % Set axis and view
 axis equal;
@@ -205,12 +221,12 @@ zlim([1, Nz]);
 xlabel('X');
 ylabel('Y');
 zlabel('Z');
-title('Transducer and Pipe Mask Visualization');
+title('Transducer, Sensor, and Pipe Mask Visualization');
 view(80, 30);
 camlight;
 lighting gouraud;
 grid on;
 hold off;
 
-saveas(gcf, fullfile(save_path, 'liquid_only.png'));
+saveas(gcf, fullfile(save_path, 'solid_liquid.png'));
 
