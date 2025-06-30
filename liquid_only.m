@@ -167,7 +167,7 @@ ylabel('Pressure [MPa]');
 ylim([-2 2]);
 title('Signal from Transducer transmit');
 grid on;
-saveas(gcf, fullfile(save_path, 'signal_liquid_only_tutorial_reflector.png'));
+saveas(gcf, fullfile(save_path, 'signal_liquid_only_reflector.png'));
 
 
 figure(21); clf;
