@@ -47,7 +47,7 @@
         "diameter": 0.009,
         "tone_burst_freq": 4e6,
         "magnitude": 1,
-        "source_strength":1e7,
+        "source_strength":1e6,
         "prf": 3000,
         "pulse_length": 1e-6,
         "max_n": 1000,

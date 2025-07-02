@@ -2,8 +2,9 @@ clearvars;
 
 % simulation settings
 DATA_CAST = 'gpuArray-single';
-save_path = '/mnt/matsubara/rawdata';
+
 config = jsondecode(fileread('config.json'));
+save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
 % =========================================================================
@@ -41,7 +42,7 @@ medium.alpha_power = config.medium.water.alpha_power;
 medium.BonA = 6;
 
 % create the time array
-t_end = 150e-6;                  % [s]
+t_end = config.simulation.t_end;                  % [s]
 kgrid.makeTime(medium.sound_speed, 0.03, t_end);
 
 % =========================================================================
@@ -49,9 +50,9 @@ kgrid.makeTime(medium.sound_speed, 0.03, t_end);
 % =========================================================================
 
 % define properties of the input signal
-source_strength = 1e6;          % [Pa]
-tone_burst_freq = 4e6;        % [Hz]
-tone_burst_cycles = 4;
+source_strength = config.source.source_strength;          % [Pa]
+tone_burst_freq = config.source.tone_burst_freq;        % [Hz]
+tone_burst_cycles = config.source.tone_burst_cycles;
 
 % create the input signal using toneBurst 
 input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
@@ -169,7 +170,7 @@ input_args = {'DisplayMask', display_mask, ...
 
 % run the simulation
 sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_trans, transducer_trans, input_args{:});
-save(fullfile(save_path, 'solid_liquid.mat'), 'sensor_data', 'kgrid', 'dt', '-v7.3');
+save(fullfile(save_path, 'solid_liquid.mat'), 'sensor_data', 'kgrid', '-v7.3');
 %[f_input, as_input] = spect([input_signal, zeros(1, 2 * length(input_signal))], 1/kgrid.dt);
 %[~, as_1] = spect(sensor_data(1, :), 1/kgrid.dt);
 %[~, as_2] = spect(sensor_data(2, :), 1/kgrid.dt);
