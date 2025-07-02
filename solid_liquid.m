@@ -147,7 +147,11 @@ medium.density(pipe_mask == 1) = config.medium.vinyl.density;
 % DEFINE glass MASK
 % =========================================================================
 radius_pts = round(2.5e-3 / dx);   
-glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
+% Create ball mask with adjusted radius for non-uniform grid spacing
+% When dx and dz are different, the ball becomes elongated in the z-direction
+% To compensate, we need to scale the radius in the z-direction
+radius_pts_z = round(radius_pts * dx / dz);  % Scale radius for z-direction
+glass_mask2 = makeBall(Nx, Ny, Nz, cx+10, cy, cz-10, radius_pts, radius_pts, radius_pts_z);
 glass_mask = glass_mask2;
 medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
 medium.density(glass_mask == 1) = config.medium.glass.density;
@@ -164,8 +168,8 @@ input_args = {'DisplayMask', display_mask, ...
     'DataCast', DATA_CAST, 'PlotScale', [-1/2, 1/2] * source_strength};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_trans, transducer_trans, input_args{:});
-save(fullfile(save_path, 'liquid_only.mat'), 'sensor_data', 'kgrid', '-v7.3');
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_trans, transducer_trans, input_args{:});
+save(fullfile(save_path, 'solid_liquid.mat'), 'sensor_data', 'kgrid', 'dt', '-v7.3');
 %[f_input, as_input] = spect([input_signal, zeros(1, 2 * length(input_signal))], 1/kgrid.dt);
 %[~, as_1] = spect(sensor_data(1, :), 1/kgrid.dt);
 %[~, as_2] = spect(sensor_data(2, :), 1/kgrid.dt);
