@@ -28,14 +28,6 @@ medium.density     = config.medium.water.density     * ones(Nx,Ny,Nz,'single');
 medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx,Ny,Nz,'single');
 medium.alpha_power = config.medium.water.alpha_power;
 kgrid.makeTime(medium.sound_speed, 0.05, config.simulation.t_end);
-cx = Nx/2; cy = Ny/2; cz = Nz/2;
-radius_pts = round(2.5e-3 / dx);   
-glass_mask1 = makeBall(Nx, Ny, Nz, cx, cy, cz, radius_pts);
-glass_mask2 = makeBall(Nx, Ny, Nz, cx, cy+40, cz-40, radius_pts);
-glass_mask3 = makeBall(Nx, Ny, Nz, cx-30, cy-40, cz+40, radius_pts);
-glass_mask4 = makeBall(Nx, Ny, Nz, cx+30, cy-40, cz+40, radius_pts);
-glass_mask5 = makeBall(Nx, Ny, Nz, cx-20, cy-20, cz-20, radius_pts);
-glass_mask = glass_mask1 | glass_mask2 | glass_mask3 | glass_mask4 | glass_mask5;
 % -------------------------------------------------------------------------
 % 4) トランスデューサーの設定
 % -------------------------------------------------------------------------
@@ -63,7 +55,7 @@ transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the el
 transducer_trans.radius = inf;            % radius of curvature of the transducer [m]
 transducer_width = transducer.number_elements * transducer.element_width ...
     + (transducer.number_elements - 1) * transducer.element_spacing;
-transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2, Nz/2 - transducer.element_length/2]);
+transducer_trans.position = round([Nx-5, Ny/2 - transducer_width/2+1, Nz/2 - transducer.element_length/2+1]);
 transducer_trans.sound_speed = config.medium.water.sound_speed;
 transducer_trans.focus_distance = 25e-3;
 transducer_trans.elevation_focus_distance = 19e-3;
@@ -104,7 +96,7 @@ medium.alpha_coeff(pipe_mask) = config.medium.vinyl.alpha_coeff;
 % 5) ソース波形の設定
 % -------------------------------------------------------------------------
 % Define source signal parameters
-source_strength = 0.1e6;          % [Pa]
+source_strength = 1e6;          % [Pa]
 tone_burst_freq = 4e6;        % [Hz]
 tone_burst_cycles = 4;
 source_signal = zeros(size(kgrid.t_array));
@@ -154,7 +146,7 @@ input_args = {'DisplayMask', display_mask, ...
 sensor.record = {'p','p_max'};
 
 % run the simulation
-sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer, transducer, input_args{:});
+sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer, transducer, input_args{:});
 
 % =========================================================================
 % COMPUTE THE BEAM PATTERN USING SIMULATION STATISTICS
@@ -179,7 +171,6 @@ grid on;
 saveas(gcf, fullfile(save_path, 'source_signal.png'));
 figure(3);
 % Convert logical masks to double for visualization
-glass_mask_double = double(glass_mask);
 transducer_mask_double = double(transducer.active_elements_mask);
 transducer_trans_mask_double = double(transducer_trans.active_elements_mask);
 pipe_mask_double = double(pipe_mask);
