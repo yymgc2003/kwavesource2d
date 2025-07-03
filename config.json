@@ -74,7 +74,7 @@
         }
     },
     "simulation": {
-        "t_end": 10e-6,
+        "t_end": 1e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,

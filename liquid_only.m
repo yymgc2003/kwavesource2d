@@ -41,7 +41,8 @@ medium.BonA = 6;
 
 % create the time array
 t_end = config.simulation.t_end;                  % [s]
-kgrid.makeTime(medium.sound_speed, [], t_end);
+cfl= config.simulation.CFL;
+kgrid.makeTime(medium.sound_speed, cfl, t_end);
 
 % =========================================================================
 % DEFINE THE INPUT SIGNAL
