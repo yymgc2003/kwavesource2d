@@ -153,7 +153,7 @@ radius_pts = round(2.5e-3 / dx);
 % When dx and dz are different, the ball becomes elongated in the z-direction
 % To compensate, we need to scale the radius in the z-direction
 radius_pts_z = round(radius_pts * dx / dz);  % Scale radius for z-direction
-glass_mask2 = makeBall(Nx, Ny, Nz, cx+10, cy, cz, radius_pts);
+glass_mask2 = makeBall(Nx, Ny, Nz, cx-20, cy, cz, radius_pts);
 glass_mask = glass_mask2;
 medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
 medium.density(glass_mask == 1) = config.medium.glass.density;
