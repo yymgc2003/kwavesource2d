@@ -74,12 +74,13 @@
         }
     },
     "simulation": {
-        "t_end": 150e-6,
+        "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
-        "CFL": 0.05
+        "CFL": 0.05,
+        "seed": 12345
     },
     "save_path": "/mnt/matsubara/rawdata"
 } 
