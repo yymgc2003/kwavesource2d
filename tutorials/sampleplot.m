@@ -1,14 +1,14 @@
-% CSVファイルをテーブルとして読み込む（ヘッダー対応）
+% Read CSV file as table (with header support)
 config = jsondecode(fileread('../config.json'));
 sample_table = readtable(fullfile(config.location_seedfiles_path, 'location1.csv'));
-x=sample_table.Var1;
-y=sample_table.Var2;
-z=sample_table.Var3;
-% Plot 2D scatter of X and Y columns and save as image
+x = sample_table.Var1;
+y = sample_table.Var2;
+z = sample_table.Var3;
+
+% 2D scatter plot in XY plane with unit circle
 figure;
 scatter(x, y, 'filled');
 hold on;
-% Plot a circle of radius 1 centered at (0,0)
 theta = linspace(0, 2*pi, 200);
 plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
 hold off;
@@ -18,62 +18,54 @@ title('Sample points and unit circle in XY plane');
 grid on;
 axis equal;
 saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot.png'));
-% 3D scatter plot of sample points and a cylinder (centered at 0, radius 1, height from -1 to 1)
-figure;
-scatter3(x, y, z, 36, 'filled'); % 3D scatter of samples
-hold on;
 
-% Create cylinder data (centered at (0,0), radius 1, height from -1 to 1)
-n_cylinder = 100; % Number of points for smoothness
-[theta_cyl, z_cyl] = meshgrid(linspace(0, 2*pi, n_cylinder), linspace(-1, 1, n_cylinder));
+% 3D scatter plot and unit cylinder (z from 0 to 1)
+figure;
+scatter3(x, y, z, 36, 'filled');
+hold on;
+n_cylinder = 100;
+[theta_cyl, z_cyl] = meshgrid(linspace(0, 2*pi, n_cylinder), linspace(0, 1, n_cylinder));
 x_cyl = cos(theta_cyl);
 y_cyl = sin(theta_cyl);
-
-% Plot the cylinder surface
 surf(x_cyl, y_cyl, z_cyl, 'FaceAlpha', 0.2, 'EdgeColor', 'none', 'FaceColor', [0.8 0.2 0.2]);
-
-% Plot the top and bottom circles of the cylinder
-plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), ones(1, n_cylinder), 'r-', 'LineWidth', 1.5);    % Top
-plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), -ones(1, n_cylinder), 'r-', 'LineWidth', 1.5);   % Bottom
-
+plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), ones(1, n_cylinder), 'r-', 'LineWidth', 1.5);   % Top
+plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), zeros(1, n_cylinder), 'r-', 'LineWidth', 1.5);  % Bottom
 hold off;
 xlabel('X');
 ylabel('Y');
 zlabel('Z');
-title('Sample points and unit cylinder in 3D');
+title('Sample points and unit cylinder in 3D (z: 0 to 1)');
 grid on;
 axis equal;
 view(3);
 saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot3d.png'));
 
-% Plot XZ plane projection (reference: XY plane plot)
+% XZ plane projection (z from 0 to 1, square from 0 to 1)
 figure;
-scatter(x, z, 'filled'); % XZ scatter plot
+scatter(x, z, 'filled');
 hold on;
-% Draw the projection of the unit square (Y=0) in XZ plane
 x_square = [-1 1 1 -1 -1];
-z_square = [-1 -1 1 1 -1];
-plot(x_square, z_square, 'r-', 'LineWidth', 2); % XZ square projection
+z_square = [0 0 1 1 0];
+plot(x_square, z_square, 'r-', 'LineWidth', 2);
 hold off;
 xlabel('X');
 ylabel('Z');
-title('Sample points and unit square in XZ plane');
+title('Sample points and [0,1] square in XZ plane');
 grid on;
 axis equal;
 saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot_xz.png'));
 
-% Plot YZ plane projection (reference: XY plane plot)
+% YZ plane projection (z from 0 to 1, square from 0 to 1)
 figure;
-scatter(y, z, 'filled'); % YZ scatter plot
+scatter(y, z, 'filled');
 hold on;
-% Draw the projection of the unit square (X=0) in YZ plane
 y_square = [-1 1 1 -1 -1];
-z_square = [-1 -1 1 1 -1];
-plot(y_square, z_square, 'r-', 'LineWidth', 2); % YZ square projection
+z_square = [0 0 1 1 0];
+plot(y_square, z_square, 'r-', 'LineWidth', 2);
 hold off;
 xlabel('Y');
 ylabel('Z');
-title('Sample points and unit circle in YZ plane');
+title('Sample points and [0,1] square in YZ plane');
 grid on;
 axis equal;
 saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot_yz.png'));

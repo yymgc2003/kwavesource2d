@@ -1,10 +1,8 @@
-% MATLABでは、スクリプトファイル（.mファイル）内で関数定義を行う場合、そのファイル全体を関数ファイルとして書き直す必要があります。
-% しかし、スクリプトとして実行したい場合は、関数定義を別ファイルに分けるか、関数呼び出し部分と関数定義部分を分離してください。
-% 例えば、以下のようにスクリプト部分と関数部分を分けて記述します。
+
 
 % --- Script to generate multiple location CSV files ---
 num_repeat = 5; % Number of times to repeat
-m = 10;         % Number of samples per file
+m = 4;         % Number of samples per file
 
 for i = 1:num_repeat
     samples = glass_location_gen(m);
@@ -69,8 +67,8 @@ function samples = glass_location_gen(m)
     while count < m && attempts < max_attempts
         % x, yはガウス分布、zは[-1,1]の一様分布からサンプリング
         xy = mvnrnd([0, 0], eye(2), 1)'; % 2x1ベクトル
-        z = -1 + 2 * rand(1,1);          % [-1,1]の一様分布
-        candidate = [xy; z];             % 3x1ベクトル
+        z = (1 - min_dist) * rand(1,1) + min_dist/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
+        candidate = [xy; z];             % 3x1 vec
         % Check if (X,Y) is inside unit circle
         if (candidate(1))^2 + (candidate(2))^2 <= (1-min_dist)^2
             % If this is the first sample, always accept
