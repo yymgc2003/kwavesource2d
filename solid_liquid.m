@@ -120,7 +120,7 @@ transducer_receive.receive_apodization = 'Rectangular';
 transducer_receive.active_elements = zeros(transducer_receive.number_elements, 1);
 transducer_receive.active_elements(21:52) = 1;
 transducer_receive = kWaveTransducer(kgrid, transducer_receive);
-transducer_receive.properties;
+%transducer_receive.properties;
 % =========================================================================
 % DEFINE SENSOR MASK
 % =========================================================================

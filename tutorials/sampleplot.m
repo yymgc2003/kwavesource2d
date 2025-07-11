@@ -1,10 +1,12 @@
 % CSVファイルをテーブルとして読み込む（ヘッダー対応）
 config = jsondecode(fileread('../config.json'));
-sample_table = readtable(fullfile(config.save_path, 'sample.csv'));
-
+sample_table = readtable(fullfile(config.location_seedfiles_path, 'location1.csv'));
+x=sample_table.Var1;
+y=sample_table.Var2;
+z=sample_table.Var3;
 % Plot 2D scatter of X and Y columns and save as image
 figure;
-scatter(sample_table.X, sample_table.Y, 'filled');
+scatter(x, y, 'filled');
 hold on;
 % Plot a circle of radius 1 centered at (0,0)
 theta = linspace(0, 2*pi, 200);
@@ -15,10 +17,10 @@ ylabel('Y');
 title('Sample points and unit circle in XY plane');
 grid on;
 axis equal;
-saveas(gcf, fullfile(config.save_path, 'pipeplot.png'));
+saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot.png'));
 % 3D scatter plot of sample points and a cylinder (centered at 0, radius 1, height from -1 to 1)
 figure;
-scatter3(sample_table.X, sample_table.Y, sample_table.Z, 36, 'filled'); % 3D scatter of samples
+scatter3(x, y, z, 36, 'filled'); % 3D scatter of samples
 hold on;
 
 % Create cylinder data (centered at (0,0), radius 1, height from -1 to 1)
@@ -42,11 +44,11 @@ title('Sample points and unit cylinder in 3D');
 grid on;
 axis equal;
 view(3);
-saveas(gcf, fullfile(config.save_path, 'pipeplot3d.png'));
+saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot3d.png'));
 
 % Plot XZ plane projection (reference: XY plane plot)
 figure;
-scatter(sample_table.X, sample_table.Z, 'filled'); % XZ scatter plot
+scatter(x, z, 'filled'); % XZ scatter plot
 hold on;
 % Draw the projection of the unit square (Y=0) in XZ plane
 x_square = [-1 1 1 -1 -1];
@@ -58,11 +60,11 @@ ylabel('Z');
 title('Sample points and unit square in XZ plane');
 grid on;
 axis equal;
-saveas(gcf, fullfile(config.save_path, 'pipeplot_xz.png'));
+saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot_xz.png'));
 
 % Plot YZ plane projection (reference: XY plane plot)
 figure;
-scatter(sample_table.Y, sample_table.Z, 'filled'); % YZ scatter plot
+scatter(y, z, 'filled'); % YZ scatter plot
 hold on;
 % Draw the projection of the unit square (X=0) in YZ plane
 y_square = [-1 1 1 -1 -1];
@@ -74,4 +76,4 @@ ylabel('Z');
 title('Sample points and unit circle in YZ plane');
 grid on;
 axis equal;
-saveas(gcf, fullfile(config.save_path, 'pipeplot_yz.png'));
+saveas(gcf, fullfile(config.location_seedfiles_path, 'pipeplot_yz.png'));

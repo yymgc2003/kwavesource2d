@@ -101,7 +101,7 @@ transducer_transmit = kWaveTransducer(kgrid, transducer_transmit);
 % print out transducer_transmit properties
 transducer_transmit.properties;
 
-transducer_trans.number_elements = 90;    % total number of transducer elements
+transducer_trans.number_elements = 180;    % total number of transducer elements
 transducer_trans.element_width = 1;       % width of each element [grid points/voxels]
 transducer_trans.element_length = 12;     % length of each element [grid points/voxels]
 transducer_trans.element_spacing = 0;     % spacing (kerf  width) between the elements [grid points/voxels]
@@ -116,7 +116,7 @@ transducer_trans.steering_angle = 0;
 transducer_trans.transmit_apodization = 'Rectangular';
 transducer_trans.receive_apodization = 'Rectangular';
 transducer_trans.active_elements = zeros(transducer_trans.number_elements, 1);
-transducer_trans.active_elements(21:52) = 1;
+transducer_trans.active_elements(41:140) = 1;
 transducer_trans = kWaveTransducer(kgrid, transducer_trans);
 transducer_trans.properties;
 % =========================================================================

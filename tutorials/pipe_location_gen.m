@@ -13,7 +13,7 @@ for i = 1:num_repeat
         error('Configuration file not found: %s', config_file);
     end
     config = jsondecode(fileread(config_file));
-    save_path = config.save_path;
+    save_path = config.location_seedfiles_path;
     if ~exist(save_path, 'dir')
         mkdir(save_path);
     end
