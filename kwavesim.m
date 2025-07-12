@@ -1,127 +1,89 @@
-function signalgen_module_all()
-% この関数はconfig.jsonを読み込み、指定ディレクトリ内のlocation1.csv, location2.csv, ... すべてに対して
-% signalgen_moduleを順次実行します。
+function kwavesim(config_file, location_csv, locnum_str)
+% Main simulation logic for k-Wave, extracted for modular use.
 
-    % configファイルのパス
-    config_file = 'config.json';
-
-    % config.jsonからlocation_seedfiles_pathを取得
-    config = jsondecode(fileread(config_file));
-    location_dir = config.location_seedfiles_path;
-
-    % location*.csvファイルをすべて取得
-    files = dir(fullfile(location_dir, 'location*.csv'));
-    fprintf('--- %d location*.csv files found. ---\n', length(files));
-    if isempty(files)
-        error('No location*.csv files found in %s.', location_dir);
-    end
-
-    % 各CSVファイルに対してsignalgen_moduleを実行
-    for i = 1:length(files)
-        location_csv = fullfile(location_dir, files(i).name);
-        fprintf('--- Processing %s ---\n', location_csv);
-        signalgen_module(config_file, location_csv);
-    end
-end
-
-function signalgen_module(config_file, location_csv)
-% この関数は指定されたconfig.jsonとlocationX.csvを使ってk-Waveシミュレーションを実行し、
-% location番号付きの信号データファイルと画像を出力します。
-% 例: signalgen_module('config.json', 'location3.csv')
-
-    % location_csvファイル名から番号を抽出
-    [~, locname, ~] = fileparts(location_csv);
-    locnum = regexp(locname, '\d+', 'match');
-    if isempty(locnum)
-        locnum_str = '';
-    else
-        locnum_str = locnum{1};
-    end
-
-    % 設定ファイルの読み込み
     config = jsondecode(fileread(config_file));
     save_path = config.save_path;
 
-    % シミュレーション設定
+    % Simulation settings
     DATA_CAST = 'gpuArray-single';
 
-    % PMLサイズ設定
+    % PML size settings
     PML_X_SIZE = 20; % [grid points]
     PML_Y_SIZE = 10; % [grid points]
     PML_Z_SIZE = 10; % [grid points]
 
-    % PMLを除いたグリッドポイント数
+    % Number of grid points excluding PML
     Nx = config.grid.Nx - 2*PML_X_SIZE;
     Ny = config.grid.Ny - 2*PML_Y_SIZE;
     Nz = config.grid.Nz - 2*PML_Z_SIZE;
 
-    % グリッド間隔
+    % Grid spacing
     dx = config.grid.dx; dy = config.grid.dy; dz = config.grid.dz;
 
-    % k-spaceグリッド作成
+    % Create k-space grid
     kgrid = kWaveGrid(Nx, dx, Ny, dy, Nz, dz);
 
-    % 伝播媒体のプロパティ
+    % Medium properties
     medium.sound_speed = config.medium.water.sound_speed * ones(Nx, Ny, Nz);
     medium.density = config.medium.water.density * ones(Nx, Ny, Nz);
     medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny, Nz);
     medium.alpha_power = config.medium.water.alpha_power;
     medium.BonA = 6;
 
-    % 時間配列作成
+    % Create time array
     t_end = config.simulation.t_end;
     cfl = config.simulation.CFL;
     kgrid.makeTime(medium.sound_speed, cfl, t_end);
 
-    % 入力信号のプロパティ
+    % Input signal properties
     source_strength = config.source.source_strength;
     tone_burst_freq = config.source.tone_burst_freq;
     tone_burst_cycles = config.source.tone_burst_cycles;
 
-    % 入力信号生成
+    % Generate input signal
     input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
-    % インピーダンスでスケーリング
+    % Scale by impedance
     input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal;
 
-    % 送信トランスデューサ定義
+    % Define transmit transducer
     transducer_transmit.number_elements = 180;
     transducer_transmit.element_width = 1;
     transducer_transmit.element_length = 12;
     transducer_transmit.element_spacing = 0;
     transducer_transmit.radius = inf;
 
-    % トランスデューサ幅
+    % Transducer width
     transducer_transmit_width = transducer_transmit.number_elements * transducer_transmit.element_width ...
         + (transducer_transmit.number_elements - 1) * transducer_transmit.element_spacing;
 
-    % 配置
+    % Position
     transducer_transmit.position = round([10, Ny/2 - transducer_transmit_width/2, Nz/2 - transducer_transmit.element_length/2]);
 
-    % ビームフォーミング用プロパティ
+    % Beamforming properties
     transducer_transmit.sound_speed = 1540;
     transducer_transmit.focus_distance = 20e-3;
     transducer_transmit.elevation_focus_distance = 19e-3;
     transducer_transmit.steering_angle = 0;
 
-    % アポダイゼーション
+    % Apodization
     transducer_transmit.transmit_apodization = 'Rectangular';
     transducer_transmit.receive_apodization = 'Rectangular';
 
-    % アクティブエレメント
+    % Active elements
     transducer_transmit.active_elements = zeros(transducer_transmit.number_elements, 1);
     transducer_transmit.active_elements(41:141) = 1;
 
-    % 入力信号
+    % Input signal
     transducer_transmit.input_signal = input_signal;
 
-    % トランスデューサ作成
+    % Create transmit transducer
     transducer_transmit = kWaveTransducer(kgrid, transducer_transmit);
 
-    % プロパティ表示
+    % Display properties
     transducer_transmit.properties;
 
-    % 受信トランスデューサ定義
+    % Define receive transducer
     transducer_receive.number_elements = 90;
     transducer_receive.element_width = 1;
     transducer_receive.element_length = 12;
@@ -140,7 +102,7 @@ function signalgen_module(config_file, location_csv)
     transducer_receive.active_elements(21:52) = 1;
     transducer_receive = kWaveTransducer(kgrid, transducer_receive);
 
-    % センサーマスク
+    % Sensor mask
     sensor.mask = zeros(Nx, Ny, Nz);
     sensor.mask([Nx/4, Nx/2, 3*Nx/4], Ny/2, Nz/2) = 1;
     cx = config.pipe.center_x;
@@ -158,28 +120,29 @@ function signalgen_module(config_file, location_csv)
     medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
     medium.density(pipe_mask == 1) = config.medium.vinyl.density;
 
-    % ガラスマスク
-    % locationX.csvから座標を読み込む
+    % Glass mask
+    % Read coordinates from locationX.csv
     location = csvread(location_csv);
     radius_pts = round(1.25e-3 / dx);
 
-    % glass_mask初期化
+    % Initialize glass_mask
     glass_mask = zeros(Nx, Ny, Nz);
 
-    % 各座標にボールを配置
+    % Place balls at each coordinate
     for i = 1:size(location,1)
         loc_seed = location(i,:);
         bx = round(inner_r * loc_seed(1)) + cx;
         by = round(inner_r * loc_seed(2)) + cy;
         bz = round(Nz * loc_seed(3));
-        fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
+        %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
         glass_mask = glass_mask | makeBall(Nx, Ny, Nz, bx, by, bz, radius_pts);
     end
+    %glass_mask = zeros(Nx, Ny, Nz); %check validity for liquid only setting
     medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
     medium.density(glass_mask == 1) = config.medium.glass.density;
     medium.alpha_coeff(glass_mask == 1) = config.medium.glass.alpha_coeff;
 
-    % シミュレーション実行
+    % Run simulation
     display_mask = transducer_transmit.all_elements_mask | pipe_mask | glass_mask;
     input_args = {'DisplayMask', display_mask, ...
         'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
@@ -188,9 +151,9 @@ function signalgen_module(config_file, location_csv)
         'DataCast', DATA_CAST, 'PlotScale', [-1/2, 1/2] * source_strength};
 
     sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
-    save(fullfile(save_path, ['solid_liquid' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
+    save(fullfile(config.save_data_path, ['solid_liquid' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
 
-    % 信号波形のプロットと保存
+    % Plot and save signal waveform
     scan_line = transducer_transmit.scan_line(sensor_data);
     figure(1);
     plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
@@ -201,43 +164,43 @@ function signalgen_module(config_file, location_csv)
     grid on;
     saveas(gcf, fullfile(save_path, ['signal_solid_liquid_reflector' locnum_str '.png']));
 
-    % 実験セットアップの可視化と保存
+    % Visualize and save experimental setup
     figure(21); clf;
     hold on;
 
-    % マスクの次元を可視化用に並べ替え
+    % Permute mask dimensions for visualization
     transmit_mask = permute(transducer_transmit.all_elements_mask, [2,1,3]);
     sensor_mask   = permute(sensor.mask, [2,1,3]);
     pipe_mask_p   = permute(pipe_mask, [2,1,3]);
     glass_mask_p  = permute(glass_mask, [2,1,3]);
-    % 可視化用にdouble型へ
+    % Convert to double for visualization
     transmit_mask_double = double(transmit_mask);
     sensor_mask_double   = double(sensor_mask);
     pipe_mask_double     = double(pipe_mask_p);
     glass_mask_double    = double(glass_mask_p);
 
-    % 送信トランスデューサマスク（青）
+    % Transmit transducer mask (blue)
     if any(transmit_mask_double(:))
         p1 = patch(isosurface(transmit_mask_double, 0.5));
         isonormals(transmit_mask_double, p1);
         set(p1, 'FaceColor', 'blue', 'EdgeColor', 'none', 'FaceAlpha', 0.8);
     end
 
-    % パイプマスク（緑）
+    % Pipe mask (green)
     if any(pipe_mask_double(:))
         p3 = patch(isosurface(pipe_mask_double, 0.3));
         isonormals(pipe_mask_double, p3);
         set(p3, 'FaceColor', 'green', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
     end
 
-    % ガラスマスク（赤）
+    % Glass mask (red)
     if any(glass_mask_double(:))
         p4 = patch(isosurface(glass_mask_double, 0.3));
         isonormals(glass_mask_double, p4);
         set(p4, 'FaceColor', 'red', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
     end
 
-    % 軸とビュー設定
+    % Axis and view settings
     axis equal;
     xlim([1, Nx]);
     ylim([1, Ny]);
@@ -253,4 +216,4 @@ function signalgen_module(config_file, location_csv)
     hold off;
 
     saveas(gcf, fullfile(save_path, ['experimental_setup' locnum_str '.png']));
-end
+end 

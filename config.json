@@ -74,14 +74,15 @@
         }
     },
     "simulation": {
-        "t_end": 1e-6,
+        "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
-        "CFL": 0.05,
+        "CFL": 0.03,
         "seed": 12345
     },
     "save_path": "/mnt/matsubara/rawdata",
-    "location_seedfiles_path": "/mnt/matsubara/location_seed"
+    "location_seedfiles_path": "/mnt/matsubara/location_seed",
+    "save_data_path": "/mnt/matsubara/signals_sim"
 } 
