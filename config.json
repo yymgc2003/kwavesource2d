@@ -16,7 +16,7 @@
             "BonA": 6
         },
         "vinyl": {
-            "sound_speed": 2390,
+            "sound_speed": 2898,
             "density": 1400,
             "alpha_coeff": 0.448,
             "alpha_power": 2,
@@ -48,7 +48,6 @@
         "tone_burst_freq": 4e6,
         "magnitude": 1,
         "source_strength":1e6,
-        "prf": 3000,
         "pulse_length": 1e-6,
         "max_n": 1000,
         "tone_burst_cycles": 4
@@ -79,7 +78,7 @@
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
-        "CFL": 0.03,
+        "CFL": 0.1,
         "seed": 12345
     },
     "save_path": "/mnt/matsubara/rawdata",
