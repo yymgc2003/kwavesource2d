@@ -16,7 +16,7 @@
             "BonA": 6
         },
         "vinyl": {
-            "sound_speed": 2898,
+            "sound_speed": 2790,
             "density": 1400,
             "alpha_coeff": 0.448,
             "alpha_power": 2,
@@ -78,10 +78,14 @@
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
-        "CFL": 0.1,
-        "seed": 12345
+        "CFL": 0.03,
+        "seed": 12345,
+        "num_dataset": 10,
+        "num_particles": 8,
+        "distance_particles":0.3
     },
     "save_path": "/mnt/matsubara/rawdata",
     "location_seedfiles_path": "/mnt/matsubara/location_seed",
+    "save_logs_path": "/mnt/matsubara/logs",
     "save_data_path": "/mnt/matsubara/signals_sim"
 } 

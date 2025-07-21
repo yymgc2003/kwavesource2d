@@ -2,7 +2,7 @@ function kwavesim(config_file, location_csv, locnum_str)
 % Main simulation logic for k-Wave, extracted for modular use.
 
     config = jsondecode(fileread(config_file));
-    save_path = config.save_path;
+    save_path = config.save_logs_path;
 
     % Simulation settings
     DATA_CAST = 'gpuArray-single';

@@ -1,12 +1,14 @@
 
 
 % --- Script to generate multiple location CSV files ---
-num_repeat = 5; % Number of times to repeat
-m = 4;         % Number of samples per file
-
+addpath('..');
+config = jsondecode(fileread('config.json'));
+num_repeat = config.simulation.num_dataset; % Number of times to repeat
+m = config.simulation.num_particles;         % Number of samples per file
+d = config.simulation.distance_particles;
 for i = 1:num_repeat
     samples = glass_location_gen(m);
-    config_file = '../config.json';
+    config_file = 'config.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -30,7 +32,7 @@ function samples = glass_location_gen(m)
     %   samples - 3xm array containing the sampled points
     
     % Read configuration file
-    config_file = '../config.json';
+    config_file = 'config.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -59,7 +61,7 @@ function samples = glass_location_gen(m)
     mu = [0, 0, 0];
     sigma = eye(3);
 
-    min_dist = 0.4; % Minimum allowed Euclidean distance between any two samples (change as needed)
+    min_dist = config.simulation.distance_particles; % Minimum allowed Euclidean distance between any two samples (change as needed)
     samples = zeros(3, m); % Storage for samples
     count = 0;
     max_attempts = 100000; % Prevent infinite loop
@@ -108,7 +110,7 @@ function samples = glass_location_gen(m)
     fprintf('\nSample Statistics:\n');
     fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)));
     fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)));
-config = jsondecode(fileread('../config.json'));
+
 end
 % --- 英語での説明 ---
 % In MATLAB, you cannot define a function inside a script file and execute the script as a function.
