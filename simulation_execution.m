@@ -9,6 +9,7 @@ function simulation_execution(config_file, location_csv)
     else
         locnum_str = locnum{1};
     end
+    %save_full_path = config.save_full_path;
 
     % Call the main simulation function
     kwavesim(config_file, location_csv, locnum_str);

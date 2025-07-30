@@ -2,15 +2,25 @@ function kwavesim(config_file, location_csv, locnum_str)
 % Main simulation logic for k-Wave, extracted for modular use.
 
     config = jsondecode(fileread(config_file));
-    save_path = config.save_logs_path;
-
+    save_logs_path = fullfile(config.save_full_path, 'logs');
+    save_data_path = fullfile(config.save_full_path, 'data');
+    % Check if save_logs_path exists, and create it if it does not exist
+    if ~exist(save_logs_path, 'dir')
+        mkdir(save_logs_path);
+        fprintf('Directory %s created.\n', save_logs_path);
+    end
+    % Check if save_data_path exists, and create it if it does not exist
+    if ~exist(save_data_path, 'dir')
+        mkdir(save_data_path);
+        fprintf('Directory %s created.\n', save_data_path);
+    end
     % Simulation settings
     DATA_CAST = 'gpuArray-single';
 
     % PML size settings
-    PML_X_SIZE = 20; % [grid points]
-    PML_Y_SIZE = 10; % [grid points]
-    PML_Z_SIZE = 10; % [grid points]
+    PML_X_SIZE = config.simulation.pml_size; % [grid points]
+    PML_Y_SIZE = config.simulation.pml_size/2; % [grid points]
+    PML_Z_SIZE = config.simulation.pml_size/2; % [grid points]
 
     % Number of grid points excluding PML
     Nx = config.grid.Nx - 2*PML_X_SIZE;
@@ -41,11 +51,15 @@ function kwavesim(config_file, location_csv, locnum_str)
     tone_burst_cycles = config.source.tone_burst_cycles;
 
     % Generate input signal
+    % Read upsampled pulse from mat file
+    original_pulse = load('/home/matsubara/Scripts/kwavesource/src/pulse_4000_upsampled.mat');
+    %input_signal = original_pulse.pulse_upsampled;
+    
     input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
 
     % Scale by impedance
-    input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal;
-
+    input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal(1:end-10);
+    fprintf('input_signal: %f\n', size(input_signal));
     % Define transmit transducer
     transducer_transmit.number_elements = 180;
     transducer_transmit.element_width = 1;
@@ -61,7 +75,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     transducer_transmit.position = round([10, Ny/2 - transducer_transmit_width/2, Nz/2 - transducer_transmit.element_length/2]);
 
     % Beamforming properties
-    transducer_transmit.sound_speed = 1540;
+    transducer_transmit.sound_speed = config.transducer.sound_speed;
     transducer_transmit.focus_distance = 20e-3;
     transducer_transmit.elevation_focus_distance = 19e-3;
     transducer_transmit.steering_angle = 0;
@@ -108,8 +122,8 @@ function kwavesim(config_file, location_csv, locnum_str)
     cx = config.pipe.center_x;
     cy = config.pipe.center_y;
     cz = config.pipe.center_z;
-    outer_r_mm = 16;
-    inner_r_mm = 13;
+    outer_r_mm = config.pipe.outer_radius;
+    inner_r_mm = config.pipe.inner_radius;
     outer_r = round((outer_r_mm * 1e-3) / dx);
     inner_r = round((inner_r_mm * 1e-3) / dx);
     [Xg, Yg] = ndgrid(1:Nx, 1:Ny);
@@ -123,7 +137,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     % Glass mask
     % Read coordinates from locationX.csv
     location = csvread(location_csv);
-    radius_pts = round(1.25e-3 / dx);
+    radius_pts = round(config.simulation.glass_radius / dx);
 
     % Initialize glass_mask
     glass_mask = zeros(Nx, Ny, Nz);
@@ -146,12 +160,10 @@ function kwavesim(config_file, location_csv, locnum_str)
     display_mask = transducer_transmit.all_elements_mask | pipe_mask | glass_mask;
     input_args = {'DisplayMask', display_mask, ...
         'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
-        'RecordMovie', true, ...
-        'MovieName', fullfile(save_path, ['solid_liquid' locnum_str '.avi']), ...
         'DataCast', DATA_CAST, 'PlotScale', [-1/2, 1/2] * source_strength};
 
     sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
-    save(fullfile(config.save_data_path, ['solid_liquid' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
+    save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
 
     % Plot and save signal waveform
     scan_line = transducer_transmit.scan_line(sensor_data);
@@ -162,14 +174,14 @@ function kwavesim(config_file, location_csv, locnum_str)
     ylim([-2 2]);
     title('Signal from Transducer transmit');
     grid on;
-    saveas(gcf, fullfile(save_path, ['signal_solid_liquid_reflector' locnum_str '.png']));
+    saveas(gcf, fullfile(save_logs_path, ['signal_solid_liquid_reflector' locnum_str '.png']));
 
     % Visualize and save experimental setup
     figure(21); clf;
     hold on;
 
     % Permute mask dimensions for visualization
-    transmit_mask = permute(transducer_transmit.all_elements_mask, [2,1,3]);
+    transmit_mask = permute(transducer_transmit.all_elements_mask, [2,1,3]);  %NECESSARY FOR VISUALIZATION
     sensor_mask   = permute(sensor.mask, [2,1,3]);
     pipe_mask_p   = permute(pipe_mask, [2,1,3]);
     glass_mask_p  = permute(glass_mask, [2,1,3]);
@@ -215,5 +227,5 @@ function kwavesim(config_file, location_csv, locnum_str)
     grid on;
     hold off;
 
-    saveas(gcf, fullfile(save_path, ['experimental_setup' locnum_str '.png']));
+    saveas(gcf, fullfile(save_logs_path, ['experimental_setup' locnum_str '.png']));
 end 

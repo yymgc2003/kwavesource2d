@@ -40,7 +40,8 @@
         "elements": 72,
         "element_width": 1,
         "element_length": 12,
-        "element_spacing": 0
+        "element_spacing": 0,
+        "sound_speed": 1540
     },
     "source": {
         "distance_pipe_source": 0.05,
@@ -56,9 +57,8 @@
         "center_x": 1140,
         "center_y": 384,
         "center_z": 64,
-        "outer_radius": 160,
-        "inner_radius": 130,
-        "length": 0.1
+        "outer_radius": 16,
+        "inner_radius": 13
     },
     "sensor": {
         "x_offset": 0,
@@ -79,13 +79,14 @@
         "pml_size": 20,
         "pml_alpha": 2,
         "CFL": 0.03,
-        "seed": 12345,
         "num_dataset": 10,
-        "num_particles": 8,
+        "num_particles": 12,
+        "glass_radius": 1.25e-3,
         "distance_particles":0.3
     },
     "save_path": "/mnt/matsubara/rawdata",
     "location_seedfiles_path": "/mnt/matsubara/location_seed",
     "save_logs_path": "/mnt/matsubara/logs",
-    "save_data_path": "/mnt/matsubara/signals_sim"
+    "save_data_path": "/mnt/matsubara/signals_sim",
+    "save_full_path":"/mnt/matsubara/tmp"
 } 
