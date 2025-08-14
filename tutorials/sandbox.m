@@ -1,5 +1,6 @@
-location = csvread(fullfile(config.location_seedfiles_path, 'location1.csv'));
+
 config = jsondecode(fileread('../config.json'));
+location = csvread(fullfile(config.location_seedfiles_path, 'location1.csv'));
 % Each row of 'location' corresponds to a 3D vector [x, y, z]
 vec = location(1, :); % Get the first row as a 3D vector
 % You can print the whole vector directly using fprintf if the number of elements is known.
@@ -67,7 +68,7 @@ tone_burst_cycles = config.source.tone_burst_cycles;
     %input_signal = original_pulse.pulse_upsampled;
     %input_signal = load('/home/matsubara/Scripts/kwavesource/src/init_pulse.mat');
     %input_signal = input_signal.pulse;
-    input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal;
+    %input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal;
     % Display the class type of input_signal
     fprintf('The class of input_signal is: %s\n', class(input_signal));
     t = (0:length(input_signal)-1) * kgrid.dt * 1e6; % Time in microseconds
@@ -81,6 +82,7 @@ tone_burst_cycles = config.source.tone_burst_cycles;
     title('tutorial signal');
     grid on;
     saveas(gcf, fullfile(config.save_full_path, 'sandbox.png'));
+    
 
 
 

@@ -38,7 +38,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     medium.density = config.medium.water.density * ones(Nx, Ny, Nz);
     medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny, Nz);
     medium.alpha_power = config.medium.water.alpha_power;
-    medium.BonA = 6;
+    medium.BonA = config.medium.water.BonA;
 
     % Create time array
     t_end = config.simulation.t_end;
@@ -61,10 +61,10 @@ function kwavesim(config_file, location_csv, locnum_str)
     input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal(1:end-10);
     fprintf('input_signal: %f\n', size(input_signal));
     % Define transmit transducer
-    transducer_transmit.number_elements = 180;
-    transducer_transmit.element_width = 1;
-    transducer_transmit.element_length = 12;
-    transducer_transmit.element_spacing = 0;
+    transducer_transmit.number_elements = config.transducer.elements;
+    transducer_transmit.element_width = config.transducer.element_width;
+    transducer_transmit.element_length = config.transducer.element_length;
+    transducer_transmit.element_spacing = config.transducer.element_spacing;
     transducer_transmit.radius = inf;
 
     % Transducer width
@@ -76,9 +76,9 @@ function kwavesim(config_file, location_csv, locnum_str)
 
     % Beamforming properties
     transducer_transmit.sound_speed = config.transducer.sound_speed;
-    transducer_transmit.focus_distance = 20e-3;
-    transducer_transmit.elevation_focus_distance = 19e-3;
-    transducer_transmit.steering_angle = 0;
+    transducer_transmit.focus_distance = config.transducer.focus_distance;
+    transducer_transmit.elevation_focus_distance = config.transducer.elevation_focus_distance;
+    transducer_transmit.steering_angle = config.transducer.steering_angle;
 
     % Apodization
     transducer_transmit.transmit_apodization = 'Rectangular';
@@ -171,7 +171,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
     xlabel('Time [\mus]');
     ylabel('Pressure [MPa]');
-    ylim([-2 2]);
+    ylim([-20 20]);
     title('Signal from Transducer transmit');
     grid on;
     saveas(gcf, fullfile(save_logs_path, ['signal_solid_liquid_reflector' locnum_str '.png']));

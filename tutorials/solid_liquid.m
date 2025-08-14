@@ -3,7 +3,7 @@ clearvars;
 % simulation settings
 DATA_CAST = 'gpuArray-single';
 
-config = jsondecode(fileread('config.json'));
+config = jsondecode(fileread('../config.json'));
 save_path = config.save_path;
 % =========================================================================
 % DEFINE THE K-WAVE GRID
@@ -42,7 +42,8 @@ medium.alpha_power = config.medium.water.alpha_power;
 medium.BonA = 6;
 
 % create the time array
-t_end = config.simulation.t_end;                  % [s]
+%t_end = config.simulation.t_end;                  % [s]
+t_end = 1e-6;
 cfl= config.simulation.CFL;
 kgrid.makeTime(medium.sound_speed, cfl, t_end);
 
@@ -181,7 +182,7 @@ figure(1);
 plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
 xlabel('Time [\mus]');
 ylabel('Pressure [MPa]');
-ylim([-2 2]);
+ylim([-20 20]);
 title('Signal from Transducer transmit');
 grid on;
 saveas(gcf, fullfile(save_path, 'signal_solid_liquid_reflector.png'));
