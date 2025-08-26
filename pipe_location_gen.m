@@ -20,7 +20,72 @@ for i = 1:num_repeat
     filename = fullfile(save_path, sprintf('location%d.csv', i));
     writematrix(samples', filename); % Save as CSV (transpose to get m rows)
 end
+% XY plane scatter plot with unit circle
+figure;
+scatter(samples(1,:), samples(2,:), 'filled');
+hold on;
+theta = linspace(0, 2*pi, 200);
+plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
+hold off;
+xlabel('X');
+ylabel('Y');
+title('Sample points and unit circle in XY plane');
+grid on;
+axis equal;
+saveas(gcf, fullfile(save_path, 'pipeplot.png'));
 
+% XZ plane projection (z from 0 to 1, square from -1 to 1 in X)
+figure;
+scatter(samples(1,:), samples(3,:), 'filled');
+hold on;
+x_square = [-1 1 1 -1 -1];
+z_square = [0 0 1 1 0];
+plot(x_square, z_square, 'r-', 'LineWidth', 2);
+hold off;
+xlabel('X');
+ylabel('Z');
+title('Sample points and [0,1] square in XZ plane');
+grid on;
+axis equal;
+saveas(gcf, fullfile(save_path, 'pipeplot_xz.png'));
+
+% YZ plane projection (z from 0 to 1, square from -1 to 1 in Y)
+figure;
+scatter(samples(2,:), samples(3,:), 'filled');
+hold on;
+y_square = [-1 1 1 -1 -1];
+z_square = [0 0 1 1 0];
+plot(y_square, z_square, 'r-', 'LineWidth', 2);
+hold off;
+xlabel('Y');
+ylabel('Z');
+title('Sample points and [0,1] square in YZ plane');
+grid on;
+axis equal;
+saveas(gcf, fullfile(save_path, 'pipeplot_yz.png'));
+
+% 3D scatter plot with unit cylinder overlay
+figure;
+scatter3(samples(1,:), samples(2,:), samples(3,:), 36, 'filled');
+hold on;
+n_cylinder = 100;
+[theta_cyl, z_cyl] = meshgrid(linspace(0, 2*pi, n_cylinder), linspace(0, 1, n_cylinder));
+x_cyl = cos(theta_cyl);
+y_cyl = sin(theta_cyl);
+% Draw the surface of the unit cylinder
+surf(x_cyl, y_cyl, z_cyl, 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'FaceColor', [0.8 0.2 0.2]);
+% Draw the top and bottom edges of the cylinder
+plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), ones(1, n_cylinder), 'r-', 'LineWidth', 1.5);   % Top edge
+plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), zeros(1, n_cylinder), 'r-', 'LineWidth', 1.5);  % Bottom edge
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
+title('3D sample points and unit cylinder');
+grid on;
+axis equal;
+hold off;
+saveas(gcf, fullfile(save_path, 'pipeplot_3d.png'));
+fprintf('plot saved to %s\n', save_path);
 % --- 関数定義部分（同じファイルの末尾、または別ファイルに分離）---
 function samples = glass_location_gen(m)
     % SAMPLING - Sample from 3D Gaussian distribution
@@ -104,12 +169,87 @@ function samples = glass_location_gen(m)
     csv_file = fullfile(save_path, 'sample.csv');
     sample_table = array2table(samples', 'VariableNames', {'X', 'Y', 'Z'});
     writetable(sample_table, csv_file);
-    
+
     fprintf('Generated %d samples from 3D Gaussian distribution\n', m);
     fprintf('Samples saved to: %s\n', csv_file);
     fprintf('\nSample Statistics:\n');
     fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)));
     fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)));
+
+    % --- Plotting section: replicate the plots from tutorials/sampleplot.m ---
+
+    % % XY plane scatter plot with unit circle
+    % figure;
+    % scatter(samples(1,:), samples(2,:), 'filled');
+    % hold on;
+    % theta = linspace(0, 2*pi, 200);
+    % plot(cos(theta), sin(theta), 'r-', 'LineWidth', 2);
+    % hold off;
+    % xlabel('X');
+    % ylabel('Y');
+    % title('Sample points and unit circle in XY plane');
+    % grid on;
+    % axis equal;
+    % saveas(gcf, fullfile(save_path, 'pipeplot.png'));
+
+    % % XZ plane projection (z from 0 to 1, square from -1 to 1 in X)
+    % figure;
+    % scatter(samples(1,:), samples(3,:), 'filled');
+    % hold on;
+    % x_square = [-1 1 1 -1 -1];
+    % z_square = [0 0 1 1 0];
+    % plot(x_square, z_square, 'r-', 'LineWidth', 2);
+    % hold off;
+    % xlabel('X');
+    % ylabel('Z');
+    % title('Sample points and [0,1] square in XZ plane');
+    % grid on;
+    % axis equal;
+    % saveas(gcf, fullfile(save_path, 'pipeplot_xz.png'));
+
+    % % YZ plane projection (z from 0 to 1, square from -1 to 1 in Y)
+    % figure;
+    % scatter(samples(2,:), samples(3,:), 'filled');
+    % hold on;
+    % y_square = [-1 1 1 -1 -1];
+    % z_square = [0 0 1 1 0];
+    % plot(y_square, z_square, 'r-', 'LineWidth', 2);
+    % hold off;
+    % xlabel('Y');
+    % ylabel('Z');
+    % title('Sample points and [0,1] square in YZ plane');
+    % grid on;
+    % axis equal;
+    % saveas(gcf, fullfile(save_path, 'pipeplot_yz.png'));
+
+    % % 3D scatter plot with unit cylinder overlay
+    % figure;
+    % scatter3(samples(1,:), samples(2,:), samples(3,:), 36, 'filled');
+    % hold on;
+    % n_cylinder = 100;
+    % [theta_cyl, z_cyl] = meshgrid(linspace(0, 2*pi, n_cylinder), linspace(0, 1, n_cylinder));
+    % x_cyl = cos(theta_cyl);
+    % y_cyl = sin(theta_cyl);
+    % % Draw the surface of the unit cylinder
+    % surf(x_cyl, y_cyl, z_cyl, 'FaceAlpha', 0.3, 'EdgeColor', 'none', 'FaceColor', [0.8 0.2 0.2]);
+    % % Draw the top and bottom edges of the cylinder
+    % plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), ones(1, n_cylinder), 'r-', 'LineWidth', 1.5);   % Top edge
+    % plot3(cos(theta_cyl(1,:)), sin(theta_cyl(1,:)), zeros(1, n_cylinder), 'r-', 'LineWidth', 1.5);  % Bottom edge
+    % xlabel('X');
+    % ylabel('Y');
+    % zlabel('Z');
+    % title('3D sample points and unit cylinder');
+    % grid on;
+    % axis equal;
+    % hold off;
+    % saveas(gcf, fullfile(save_path, 'pipeplot_3d.png'));
+    % fprintf('plot saved to %s\n', save_path);
+    % If you want to run the plotting script directly (optional, if available and path is correct):
+    % try
+    %     run(fullfile(fileparts(mfilename('fullpath')), 'tutorials', 'sampleplot.m'));
+    % catch ME
+    %     warning('Could not run sampleplot.m: %s', ME.message);
+    % end
 
 end
 % --- 英語での説明 ---
