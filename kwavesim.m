@@ -52,7 +52,7 @@ function kwavesim(config_file, location_csv, locnum_str)
 
     % Generate input signal
     % Read upsampled pulse from mat file
-    original_pulse = load('/home/matsubara/Scripts/kwavesource/src/pulse_4000_upsampled.mat');
+    %original_pulse = load('/home/matsubara/Scripts/kwavesource/src/pulse_4000_upsampled.mat');
     %input_signal = original_pulse.pulse_upsampled;
     
     input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
@@ -171,7 +171,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
     xlabel('Time [\mus]');
     ylabel('Pressure [MPa]');
-    ylim([-20 20]);
+    ylim([-2 2]);
     title('Signal from Transducer transmit');
     grid on;
     saveas(gcf, fullfile(save_logs_path, ['signal_solid_liquid_reflector' locnum_str '.png']));
