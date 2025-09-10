@@ -2,13 +2,13 @@
 
 % --- Script to generate multiple location CSV files ---
 addpath('..');
-config = jsondecode(fileread('config.json'));
+config = jsondecode(fileread('config2d.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
 m = config.simulation.num_particles;         % Number of samples per file
 d = config.simulation.distance_particles;
 for i = 1:num_repeat
     samples = glass_location_gen(m);
-    config_file = 'config.json';
+    config_file = 'config2d.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -123,11 +123,11 @@ function samples = glass_location_gen(m)
     % Sample from 3D Gaussian (mean 0, var 1), keep only those inside unit circle in XY plane,
     % and ensure each sample is at least a certain distance away from all previous samples
 
-    mu = [0, 0, 0];
-    sigma = eye(3);
+    mu = [0, 0];
+    sigma = eye(2);
 
     min_dist = config.simulation.distance_particles; % Minimum allowed Euclidean distance between any two samples (change as needed)
-    samples = zeros(3, m); % Storage for samples
+    samples = zeros(2, m); % Storage for samples
     count = 0;
     max_attempts = 100000; % Prevent infinite loop
     attempts = 0;

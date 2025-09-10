@@ -1,10 +1,10 @@
 {
     "grid": {
-        "Nx": 2048,
-        "Ny": 768,
+        "Nx": 1024,
+        "Ny": 4096,
         "Nz": 128,
-        "dx": 0.05e-3,
-        "dy": 0.05e-3,
+        "dx": 0.04e-3,
+        "dy": 0.04e-3,
         "dz": 0.05e-3
     },
     "medium": {
@@ -57,15 +57,15 @@
         "tone_burst_cycles": 4
     },
     "pipe": {
-        "center_x": 1140,
-        "center_y": 384,
-        "center_z": 64,
-        "outer_radius": 16,
-        "inner_radius": 13
+        "center_x": 0,
+        "center_y": 0,
+        "center_z": 0,
+        "outer_radius": 16e-3,
+        "inner_radius": 13e-3
     },
     "sensor": {
         "x_offset": 0,
-        "y_offset": 400,
+        "y_offset": 0,
         "z_offset": 0,
         "type": "point",
         "array": {
@@ -79,17 +79,17 @@
         "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
-        "pml_size": 20,
+        "pml_size": [10, 20],
         "pml_alpha": 2,
         "CFL": 0.03,
         "num_dataset": 10,
-        "num_particles": 44,
+        "num_particles": 36,
         "glass_radius": 1.25e-3,
         "distance_particles":0.25
     },
-    "save_path": "/mnt/matsubara/rawdata",
-    "location_seedfiles_path": "/mnt/matsubara/location_seed",
-    "save_logs_path": "/mnt/matsubara/logs",
-    "save_data_path": "/mnt/matsubara/signals_sim",
-    "save_full_path":"/mnt/matsubara/tmp"
+    "save_path": "/mnt/sdb/yyamaguchi/kwavesource2d/rawdata",
+    "location_seedfiles_path": "/mnt/sdb/yyamaguchi/kwavesource2d/location_seed",
+    "save_logs_path": "/mnt/sdb/yyamaguchi/kwavesource2d/logs",
+    "save_data_path": "/mnt/sdb/yyamaguchi/kwavesource2d/signals_sim",
+    "save_full_path":"/mnt/sdb/yyamaguchi/kwavesource2d/tmp"
 } 

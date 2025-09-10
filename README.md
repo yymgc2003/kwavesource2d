@@ -7,6 +7,11 @@
 
 This repository provides a simulation framework using k-Wave to reproduce experimental setups involving ultrasound and fluids. The main goal is to generate high-quality datasets for machine learning applications by numerically simulating ultrasonic wave propagation in complex media, such as pipes and particles in water.
 
+## Difference between 2-D and 3-D
+
+Please note that x-axis and y-axis are swapped.
+The generated mat file have reflected signals in the first half, and transmit signals in the second half. Take care when you convert the file into npz.
+
 ## Getting Started
 
 ### Prerequisites
