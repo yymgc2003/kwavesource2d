@@ -12,5 +12,5 @@ function simulation_execution(config_file, location_csv)
     %save_full_path = config.save_full_path;
 
     % Call the main simulation function
-    kwavesim2d(config_file, location_csv, locnum_str);
+    kwavesim(config_file, location_csv, locnum_str);
 end

@@ -1,4 +1,4 @@
-function kwavesim2d(config_file, location_csv, locnum_str)
+function kwavesim(config_file, location_csv, locnum_str)
 % Main simulation logic for k-Wave, extracted for modular use.
 
     config = jsondecode(fileread(config_file));
@@ -154,7 +154,7 @@ function kwavesim2d(config_file, location_csv, locnum_str)
 
     % Run simulation
     input_args = {'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE], ...
-        'DataCast', DATA_CAST};
+        'DataCast', DATA_CAST, 'DeviceNum', 2};
 
     sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
     save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');

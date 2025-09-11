@@ -2,7 +2,7 @@ function signalgen_module_all()
 % This function reads config.json and sequentially runs signalgen_module for all location1.csv, location2.csv, ... in the specified directory.
 
     % Path to config file
-    config_file = 'config2d.json';
+    config_file = 'config.json';
 
     % Get location_seedfiles_path from config.json
     config = jsondecode(fileread(config_file));
@@ -106,6 +106,6 @@ function signalgen_module_all()
     for i = 1:length(files)
         location_csv = fullfile(location_dir, files(i).name);
         fprintf('--- Processing %s ---\n', location_csv);
-        simulation_execution2d(config_file, location_csv);
+        simulation_execution(config_file, location_csv);
     end
 end

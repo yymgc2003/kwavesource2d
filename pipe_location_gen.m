@@ -2,7 +2,7 @@
 
 % --- Script to generate multiple location CSV files ---
 addpath('..');
-config = jsondecode(fileread('config2d.json'));
+config = jsondecode(fileread('config.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
 m = config.simulation.num_particles;         % Number of samples per file
 d = config.simulation.distance_particles;
