@@ -90,9 +90,9 @@ function signalgen_module_all()
 
     % Copy config2d.json file to save_full_path
     config_file_src = config_file; % assuming config_file is the path to config.json
-    config_file_dst = fullfile(save_full_path, 'config2d.json');
+    config_file_dst = fullfile(save_full_path, 'config.json');
     copyfile(config_file_src, config_file_dst);
-    fprintf('config2d.json has been copied to %s.\n', save_full_path);
+    fprintf('config.json has been copied to %s.\n', save_full_path);
 
     % Copy location_seed folder to save_full_path
     location_seed_src = config.location_seedfiles_path;
