@@ -1,9 +1,10 @@
-function kwavesim(config_file, location_csv, locnum_str)
+function kwavesim(config_file, location_csv, locnum_str, ... 
+    device_num, save_full_path)
 % Main simulation logic for k-Wave, extracted for modular use.
 
     config = jsondecode(fileread(config_file));
-    save_logs_path = fullfile(config.save_full_path, 'logs');
-    save_data_path = fullfile(config.save_full_path, 'data');
+    save_logs_path = fullfile(save_full_path, 'logs');
+    save_data_path = fullfile(save_full_path, 'data');
     % Check if save_logs_path exists, and create it if it does not exist
     if ~exist(save_logs_path, 'dir')
         mkdir(save_logs_path);
@@ -18,8 +19,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     DATA_CAST = 'gpuArray-single';
 
     % PML size settings
-    PML_X_SIZE = config.simulation.pml_size; % [grid points]
-    PML_Y_SIZE = config.simulation.pml_size; % [grid points]
+    PML_SIZE = config.simulation.pml_size; % [grid points]
 
     % Number of grid points excluding PML
     Nx = config.grid.Nx;
@@ -37,7 +37,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     medium.density = config.medium.water.density * ones(Nx, Ny);
     medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny);
     medium.alpha_power = config.medium.water.alpha_power;
-    medium.BonA = config.medium.water.BonA;
+    medium.BonA = config.medium.water.BonA * ones(Nx, Ny);
 
     % Create time array
     t_end = config.simulation.t_end;
@@ -90,6 +90,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
     medium.density(pipe_mask == 1) = config.medium.vinyl.density;
     medium.alpha_coeff(pipe_mask == 1) = config.medium.vinyl.alpha_coeff;
+    medium.BonA(pipe_mask == 1) = config.medium.vinyl.BonA;
 
     % Glass mask
     % Read coordinates from locationX.csv
@@ -119,6 +120,7 @@ function kwavesim(config_file, location_csv, locnum_str)
     medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
     medium.density(glass_mask == 1) = config.medium.glass.density;
     medium.alpha_coeff(glass_mask == 1) = config.medium.glass.alpha_coeff;
+    medium.BonA(glass_mask == 1) = config.medium.glass.BonA;
 
     figure;
     hold on;
@@ -129,8 +131,8 @@ function kwavesim(config_file, location_csv, locnum_str)
         glass_radius_2d = glass_radius^2 - (Nz/2*dz*loc_seed(3))^2;
         if glass_radius_2d>0
             glass_radius_2d = sqrt(glass_radius_2d);
-            rectangle('Position',[loc_seed(2)-glass_radius_2d,...
-                loc_seed(1)-glass_radius_2d,...
+            rectangle('Position',[loc_seed(1)-glass_radius_2d,...
+                loc_seed(2)-glass_radius_2d,...
                 2*glass_radius_2d,2*glass_radius_2d], ...
                 'Curvature', [1 1], ...
                 'FaceColor', 'b', ...
@@ -153,8 +155,8 @@ function kwavesim(config_file, location_csv, locnum_str)
     saveas(gcf, fullfile(save_logs_path, ['experimental_setup' locnum_str '.png']));
 
     % Run simulation
-    input_args = {'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE], ...
-        'DataCast', DATA_CAST, 'DeviceNum', 2};
+    input_args = {'PlotPML', false, 'PMLSize', PML_SIZE, ...
+        'DataCast', DATA_CAST, 'DeviceNum', device_num};
 
     sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});
     save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');

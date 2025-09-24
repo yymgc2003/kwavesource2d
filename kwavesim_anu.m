@@ -18,8 +18,7 @@ function kwavesim_anu(config_file, location_csv, locnum_str)
         DATA_CAST = 'gpuArray-single';
     
         % PML size settings
-        PML_X_SIZE = config.simulation.pml_size; % [grid points]
-        PML_Y_SIZE = config.simulation.pml_size; % [grid points]
+        PML_SIZE = config.simulation.pml_size; % [grid points]
     
         % Number of grid points excluding PML
         Nx = config.grid.Nx;
@@ -37,7 +36,7 @@ function kwavesim_anu(config_file, location_csv, locnum_str)
         medium.density = config.medium.water.density * ones(Nx, Ny);
         medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny);
         medium.alpha_power = config.medium.water.alpha_power;
-        medium.BonA = config.medium.water.BonA;
+        medium.BonA = config.medium.water.BonA * ones(Nx, Ny);
     
         % Create time array
         t_end = config.simulation.t_end;
@@ -90,6 +89,7 @@ function kwavesim_anu(config_file, location_csv, locnum_str)
         medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
         medium.density(pipe_mask == 1) = config.medium.vinyl.density;
         medium.alpha_coeff(pipe_mask == 1) = config.medium.vinyl.alpha_coeff;
+        medium.BonA(pipe_mask == 1) = config.medium.vinyl.BonA;
     
         % Glass mask
         % Read coordinates from locationX.csv
@@ -150,7 +150,7 @@ function kwavesim_anu(config_file, location_csv, locnum_str)
         saveas(gcf, fullfile(save_logs_path, ['experimental_setup' locnum_str '.png']));
     
         % Run simulation
-        input_args = {'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE], ...
+        input_args = {'PlotPML', false, 'PMLSize', PML_SIZE, ...
             'DataCast', DATA_CAST, 'DeviceNum', 1};
     
         sensor_data = kspaceFirstOrder2DG(kgrid, medium, source, sensor, input_args{:});

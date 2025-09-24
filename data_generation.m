@@ -101,11 +101,13 @@ function signalgen_module_all()
     if exist(location_seed_dst, 'dir')
         rmdir(location_seed_dst, 's');
     end
+    device_num = 0;
     copyfile(location_seed_src, location_seed_dst);
     fprintf('location_seed folder has been copied to %s.\n', save_full_path);
     for i = 1:length(files)
         location_csv = fullfile(location_dir, files(i).name);
         fprintf('--- Processing %s ---\n', location_csv);
-        simulation_execution(config_file, location_csv);
+        simulation_execution(config_file, location_csv, ...
+        device_num, save_full_path);
     end
 end

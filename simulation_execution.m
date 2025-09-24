@@ -1,4 +1,5 @@
-function simulation_execution(config_file, location_csv)
+function simulation_execution(config_file, location_csv, ...
+    device_num, save_full_path)
 % Wrapper to extract location number and call kwavesim for simulation.
 
     % Extract location number from file name
@@ -12,5 +13,6 @@ function simulation_execution(config_file, location_csv)
     %save_full_path = config.save_full_path;
 
     % Call the main simulation function
-    kwavesim(config_file, location_csv, locnum_str);
+    kwavesim(config_file, location_csv, locnum_str, ...
+    device_num, save_full_path);
 end

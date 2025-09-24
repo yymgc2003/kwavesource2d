@@ -3,8 +3,8 @@
         "Nx": 1024,
         "Ny": 4096,
         "Nz": 128,
-        "dx": 0.035e-3,
-        "dy": 0.035e-3,
+        "dx": 0.032e-3,
+        "dy": 0.032e-3,
         "dz": 0.05e-3
     },
     "medium": {
@@ -86,9 +86,9 @@
         "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
-        "pml_size": [20, 40],
+        "pml_size": [10, 40],
         "pml_alpha": 2,
-        "CFL": 0.03,
+        "CFL": 0.05,
         "num_dataset": 10,
         "num_particles": 8,
         "target_gas_fraction": 0.7,
