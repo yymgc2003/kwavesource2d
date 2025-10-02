@@ -1,10 +1,10 @@
 % --- Script to generate multiple location CSV files ---
 addpath('..');
-config = jsondecode(fileread('config_gl.json'));
+config = jsondecode(fileread('config3d.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
 for i = 1:num_repeat
     samples = gas_location_gen();
-    config_file = 'config_gl.json';
+    config_file = 'config3d.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
