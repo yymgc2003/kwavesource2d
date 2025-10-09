@@ -8,7 +8,7 @@ m = config.simulation.num_particles;         % Number of samples per file
 d = config.simulation.distance_particles;
 for i = 1:num_repeat
     samples = glass_location_gen(m);
-    config_file = 'config2d.json';
+    config_file = 'config.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -126,7 +126,7 @@ function samples = glass_location_gen(m)
     mu = [0, 0];
     sigma = eye(2);
 
-    min_dist = config.simulation.distance_gas; % Minimum allowed Euclidean distance between any two samples (change as needed)
+    min_dist = config.simulation.distance_particles; % Minimum allowed Euclidean distance between any two samples (change as needed)
     samples = zeros(3, m); % Storage for samples
     count = 0;
     max_attempts = 100000; % Prevent infinite loop
