@@ -1,10 +1,18 @@
 % --- Script to generate multiple location CSV files ---
 addpath('..');
-config = jsondecode(fileread('config_gl.json'));
+config = jsondecode(fileread('config3d.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
+num_bubble = config.simulation.num_bubble;
+slug_length = config.simulation.slug_length;
+slug_range = config.simulation.slug_range;
 for i = 1:num_repeat
-    samples = gas_location_gen();
-    config_file = 'config_gl.json';
+    if config.simulation.flow_pattern == "bubble"
+        samples = gas_location_gen3d(num_bubble);
+    end
+    if config.simulation.flow_pattern == "slug"
+        samples = slug_location_gen3d(slug_length, slug_range);
+    end
+    config_file = 'config3d.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -14,7 +22,7 @@ for i = 1:num_repeat
         mkdir(save_path);
     end
     filename = fullfile(save_path, sprintf('location%d.csv', i));
-    writematrix(samples', filename); % Save as CSV (transpose to get m rows)
+    writematrix(transpose(samples), filename); % Save as CSV (transpose to get m rows)
 end
 % XY plane scatter plot with unit circle
 figure;
@@ -31,7 +39,7 @@ axis equal;
 saveas(gcf, fullfile(save_path, 'pipeplot.png'));
 
 % --- 関数定義部分（同じファイルの末尾、または別ファイルに分離）---
-function samples = gas_location_gen()
+function samples = gas_location_gen3d(num_bubble)
     % SAMPLING - Sample from 3D Gaussian distribution
     % 
     % Inputs:
@@ -41,7 +49,7 @@ function samples = gas_location_gen()
     %   samples - 3xm array containing the sampled points
     
     % Read configuration file
-    config_file = 'config_gl.json';
+    config_file = 'config3d.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
     end
@@ -49,7 +57,7 @@ function samples = gas_location_gen()
     % Read JSON configuration
     fid = fopen(config_file, 'r');
     raw = fread(fid, inf);
-    str = char(raw');
+    str = char(transpose(raw));
     fclose(fid);
     config = jsondecode(str);
     
@@ -59,10 +67,10 @@ function samples = gas_location_gen()
     end
     save_path = config.save_path;
     
-    % Create save directory if it doesn't exist
-    if ~exist(save_path, 'dir')
-        mkdir(save_path);
-    end
+    % Create save directory if it doesnt exist
+    %if ~exist(save_path, 'dir')
+    %    mkdir(save_path);
+    %end
     
     % Sample from 3D Gaussian (mean 0, var 1), keep only those inside unit circle in XY plane,
     % and ensure each sample is at least a certain distance away from all previous samples
@@ -70,112 +78,108 @@ function samples = gas_location_gen()
     mu = [0, 0];
     sigma = eye(2);
 
-    num_gas = 0;
+    k_gamma=5;
+    theta_gamma=0.5;
+
     cur_gas_fraction = 0;
-    %max_gas_fraction = config.simulation.max_gas_fraction;
-    %min_gas_fraction = config.simulation.min_gas_fraction;
-    %target_gas_fraction = (max_gas_fraction - min_gas_fraction)*rand + min_gas_fraction;
-    target_gas_fraction = config.simulation.target_gas_fraction;
-    cutoff_gas_fraction = config.simulation.cutoff_gas_fraction;
     inner_radius = config.pipe.inner_radius;
-    min_gas_radius = config.simulation.min_gas_radius;
-    min_gas_radius = min_gas_radius/inner_radius;
-    min_dist = config.simulation.distance_gas;
+    min_diameter_bubble = config.simulation.min_diameter_bubble;
+    min_diameter_bubble = min_diameter_bubble/inner_radius;
+    min_dist = config.simulation.distance_bubble;
     min_dist = min_dist / inner_radius;
+    z_range = config.grid.Nz*(config.grid.dz*1e3) / inner_radius;
     attempts_radius = 0;
     max_attempts_radius = 1000;
+    diameter_bubble = zeros(num_bubble);
+    pd = makedist('Gamma','a',k_gamma,'b',theta_gamma);
+    samples = zeros(8,num_bubble); %4番目はバブル長径、5番目は短径、6~8はx,y,z周りの回転角
+
 
     while attempts_radius < max_attempts_radius
-        num_gas = 0;
+        count = 0;
         cur_gas_fraction = 0;
-        max_gas_radius = sqrt(target_gas_fraction);
-        gas_radius_arr = zeros(1000);
+        diameter_bubble = zeros(num_bubble);
         
-        % Generate radius first.
-        if target_gas_fraction > cutoff_gas_fraction
-            num_gas = num_gas + 1;
-            cur_min_gas_radius = 0.9*max_gas_radius;
-            cur_gas_radius = (max_gas_radius - cur_min_gas_radius)*rand + cur_min_gas_radius;
-            cur_gas_fraction = cur_gas_fraction + cur_gas_radius^2;
-            gas_radius_arr(num_gas) = cur_gas_radius;
-            max_gas_radius = max(0.5 - cur_gas_radius*0.5 - min_dist, min_gas_radius*2);
+        while count < num_bubble
+            cur_diameter_bubble = random(pd)/inner_radius;
+            if cur_diameter_bubble < 0.4 && cur_diameter_bubble> min_diameter_bubble
+                count = count+1;
+                diameter_bubble(count)=cur_diameter_bubble;
+            end
         end
-        while cur_gas_fraction < target_gas_fraction
-            num_gas = num_gas + 1;
-            cur_gas_radius = (max_gas_radius - min_gas_radius)*rand + min_gas_radius;
-            cur_gas_fraction = cur_gas_fraction + cur_gas_radius^2;
-            gas_radius_arr(num_gas) = cur_gas_radius;
-            max_gas_radius_candidate = min(0.5 - gas_radius_arr(1)*0.5 - min_dist, ...
-                                        1.1*sqrt(target_gas_fraction - cur_gas_fraction));
-            max_gas_radius = max(max_gas_radius_candidate, min_gas_radius*2);
-        end
-        gas_radius_arr = gas_radius_arr(1:num_gas);
-        gas_radius_arr = sort(gas_radius_arr, 'descend');
-        samples = zeros(3, num_gas);
+        diameter_bubble = sort(diameter_bubble, 'descend');
         count = 0;
         max_attempts = 1000; % Prevent infinite loop
         attempts = 0;
+        samples = zeros(8,count);
 
 
 
-        while count < num_gas && attempts < max_attempts
+        while count < num_bubble && attempts < max_attempts
+            cur_diameter_bubble = diameter_bubble(count+1);
+            cur_min_dist = min_dist + cur_diameter_bubble/2;
             % x, yはガウス分布、zは[-1,1]の一様分布からサンプリング
-            %xy = mvnrnd([0, 0], eye(2), 1)'; % 2x1ベクトル
-            xy = [2*rand() - 1; 2*rand() - 1];
-            cur_gas_radius = gas_radius_arr(count+1);
-            cur_min_dist = min_dist + cur_gas_radius;
-            %z = (1 - cur_min_dist) * rand(1,1) + min_dist/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
-            candidate = [xy; cur_gas_radius];             % 3x1 vec
+            xy = transpose(mvnrnd([0, 0], eye(2)./(cur_diameter_bubble*inner_radius), 1)); % 2x1ベクトル
+            %xy = [2*rand-1; 2*rand-1];
+            z = (z_range - cur_diameter_bubble) * rand + cur_diameter_bubble/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
+            candidate = [xy; z];             % 3x1 vec
             % Check if (X,Y) is inside unit circle
                 % If this is the first sample, always accept
             if count ~= 0
                 if (candidate(1))^2 + (candidate(2))^2 <= (1-cur_min_dist)^2
                     % Compute Euclidean distances to all previous samples
-                    dists = -samples(3, 1:count) + sqrt(sum((samples(1:2,1:count) - candidate(1:2)).^2, 1));
+                    dists = -samples(4, 1:count)./2 + sqrt(sum((samples(1:3,1:count) - candidate(1:3)).^2, 1));
                     % Accept only if all distances are greater than or equal to min_dist
                     if all(dists >= cur_min_dist)
                         count = count + 1;
-                        samples(:, count) = candidate;
+                        samples(1:3, count) = candidate;
+                        samples(4, count) = cur_diameter_bubble;
+                        samples(5, count) = cur_diameter_bubble / (rand + 1);
+                        samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
+                        cur_gas_fraction = cur_gas_fraction + samples(5, count)*cur_diameter_bubble^2/z_range/6;
                         attempts = 0;
+                        %fprintf('Generated %d bubbles at %.4f %.4f %.4f diameter %.4f\n', count, samples(1,count),samples(2,count),samples(3,count), samples(4,count));
                     end
                 end
             else
-                if (candidate(1))^2 + (candidate(2))^2 <= ((1-cur_gas_radius)/3)^2
+                if (candidate(1))^2 + (candidate(2))^2 <= (1-cur_min_dist)^2
                     count = count + 1;
-                    samples(:, count) = candidate;
+                    samples(1:3, count) = candidate;
+                    samples(4, count) = cur_diameter_bubble;
+                    samples(5, count) = cur_diameter_bubble / (rand*0.5 + 1);
+                    samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
                 end
             end
             attempts = attempts + 1;
         end
-        attempts_radius = attempts_radius + 1;
-        if count == num_gas
+        if count == num_bubble
             % Calculate the Euclidean distance between all pairs of samples and display the minimum value
-            D = pdist(samples'); % pdist computes the pairwise distances between rows of the matrix
+            D = pdist(transpose(samples(1:3,:))); % pdist computes the pairwise distances between rows of the matrix
             min_dist_val = min(D);
             fprintf('Minimum Euclidean distance between samples: %.6f\n', min_dist_val);
-            disp(['Successfully generated ' num2str(num_gas) ' samples! ']);
-            fprintf("Target gas fraction: %.4f\n", target_gas_fraction);
+            disp(['Successfully generated ' num2str(num_bubble) ' samples! ']);
             fprintf("Current gas fraction: %.4f\n", cur_gas_fraction);
             break;
         end
-        if count < num_gas
+        if count < num_bubble
             attempts_radius = attempts_radius + 1;
+            %fprintf('Failed\n');
         end
         if attempts_radius == max_attempts_radius
-            error('Could not generate enough samples in %.4f fraction. Try reducing min_dist or increasing max_attempts.', target_gas_fraction);
+            error('Could not generate enough samples in %.4f fraction. Try reducing min_dist or increasing max_attempts.', num_bubble);
         end
     end
     
     % Save samples to CSV file
     csv_file = fullfile(save_path, 'sample.csv');
-    sample_table = array2table(samples', 'VariableNames', {'X', 'Y', 'Z'});
+    sample_table = array2table(transpose(samples), 'VariableNames', {'X', 'Y', 'Z', 'A', 'B', 'RL', 'PC', 'YW'});
     writetable(sample_table, csv_file);
 
-    fprintf('Generated %d samples from 3D Gaussian distribution\n', num_gas);
+    fprintf('Generated %d samples from 3D Gaussian distribution\n', num_bubble);
     fprintf('Samples saved to: %s\n', csv_file);
     fprintf('\nSample Statistics:\n');
-    fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)));
-    fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)));
+    fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)), mean(samples(4,:)));
+    fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)), std(samples(4,:)));
 
     % --- Plotting section: replicate the plots from tutorials/sampleplot.m ---
 

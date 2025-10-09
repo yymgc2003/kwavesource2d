@@ -83,20 +83,28 @@
         }
     },
     "simulation": {
-        "t_end": 100e-6,
+        "t_end": 0.1e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
         "pml_alpha": 2,
         "CFL": 0.03,
-        "num_dataset": 10,
-        "num_particles": 50,
-        "glass_radius": 1.25e-3,
-        "distance_particles":0.25
+        "num_dataset": 1,
+        "num_particles": 0,
+        "num_bubble":100,
+        "glass_radius": 1.25,
+        "distance_particles":0.25,
+        "distance_bubble":0.15,
+        "min_diameter_bubble":0.8,
+        "slug_range":30,
+        "slug_length":60,
+        "slug_pow_num":3,
+        "flow_pattern":"slug",
+        "min_liquid_thickness":1
     },
-    "save_path": "/mnt/yamaguchi/kwavesource/rawdata",
-    "location_seedfiles_path": "/mnt/yamaguchi/kwavesource/location_seed",
-    "save_logs_path": "/mnt/yamaguchi/kwavesource/logs",
-    "save_data_path": "/mnt/yamaguchi/kwavesource/signals_sim",
-    "save_full_path":"/mnt/yamaguchi/kwavesource/tmp"
+    "save_path": "/mnt/yamaguchi/kwavesource_gl/rawdata",
+    "location_seedfiles_path": "/mnt/yamaguchi/kwavesource_gl/location_seed",
+    "save_logs_path": "/mnt/yamaguchi/kwavesource_gl/logs",
+    "save_data_path": "/mnt/yamaguchi/kwavesource_gl/signals_sim",
+    "save_full_path":"/mnt/yamaguchi/kwavesource_gl/tmp"
 } 
