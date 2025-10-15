@@ -121,7 +121,7 @@ function samples = gas_location_gen3d(num_bubble)
             % x, yはガウス分布、zは[-1,1]の一様分布からサンプリング
             xy = transpose(mvnrnd([0, 0], eye(2)./(cur_diameter_bubble*inner_radius), 1)); % 2x1ベクトル
             %xy = [2*rand-1; 2*rand-1];
-            z = (z_range - cur_diameter_bubble) * rand + cur_diameter_bubble/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
+            z = (z_range - cur_diameter_bubble) * rand - z_range/2  + cur_diameter_bubble/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
             candidate = [xy; z];             % 3x1 vec
             % Check if (X,Y) is inside unit circle
                 % If this is the first sample, always accept
@@ -134,7 +134,7 @@ function samples = gas_location_gen3d(num_bubble)
                         count = count + 1;
                         samples(1:3, count) = candidate;
                         samples(4, count) = cur_diameter_bubble;
-                        samples(5, count) = cur_diameter_bubble / (rand + 1);
+                        samples(5, count) = cur_diameter_bubble;
                         samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
                         cur_gas_fraction = cur_gas_fraction + samples(5, count)*cur_diameter_bubble^2/z_range/6;
                         attempts = 0;
@@ -146,7 +146,7 @@ function samples = gas_location_gen3d(num_bubble)
                     count = count + 1;
                     samples(1:3, count) = candidate;
                     samples(4, count) = cur_diameter_bubble;
-                    samples(5, count) = cur_diameter_bubble / (rand*0.5 + 1);
+                    samples(5, count) = cur_diameter_bubble;
                     samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
                 end
             end
@@ -172,14 +172,15 @@ function samples = gas_location_gen3d(num_bubble)
     
     % Save samples to CSV file
     csv_file = fullfile(save_path, 'sample.csv');
-    sample_table = array2table(transpose(samples), 'VariableNames', {'X', 'Y', 'Z', 'A', 'B', 'RL', 'PC', 'YW'});
-    writetable(sample_table, csv_file);
+    writematrix(samples', csv_file);
 
     fprintf('Generated %d samples from 3D Gaussian distribution\n', num_bubble);
     fprintf('Samples saved to: %s\n', csv_file);
     fprintf('\nSample Statistics:\n');
     fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)), mean(samples(4,:)));
     fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)), std(samples(4,:)));
+
+    plot_gen(config_file, csv_file, 1, save_path);
 
     % --- Plotting section: replicate the plots from tutorials/sampleplot.m ---
 
