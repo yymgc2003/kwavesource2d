@@ -3,9 +3,13 @@ function plot_gen(config_file, location_csv, locnum_str, ...
 
     config = jsondecode(fileread(config_file));
     save_logs_path = fullfile(save_full_path, 'logs');
+    if ~exist(save_logs_path, 'dir')
+        mkdir(save_logs_path)
+    end
     save_data_path = fullfile(save_full_path, 'data');
 
-    location = csvread(location_csv);
+    location_df = readtable(location_csv);
+    location = table2array(location_df);
     glass_radius = config.simulation.glass_radius;
     Nz = config.grid.Nz;
     dz = config.grid.dz;

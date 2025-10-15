@@ -22,7 +22,9 @@ for i = 1:num_repeat
         mkdir(save_path);
     end
     filename = fullfile(save_path, sprintf('location%d.csv', i));
-    writematrix(transpose(samples), filename); % Save as CSV (transpose to get m rows)
+    name = ["center x","center y","center z","major axis length","minor axis length","raw","pitch","yaw"];
+    T = array2table(transpose(samples), 'VariableNames', name);
+    writetable(T, filename); % Save as CSV (transpose to get m rows)
 end
 % XY plane scatter plot with unit circle
 figure;
@@ -87,7 +89,10 @@ function samples = gas_location_gen3d(num_bubble)
     min_diameter_bubble = min_diameter_bubble/inner_radius;
     min_dist = config.simulation.distance_bubble;
     min_dist = min_dist / inner_radius;
-    z_range = config.grid.Nz*(config.grid.dz*1e3) / inner_radius;
+    min_dist_wall = config.simulation.min_dist_wall;
+    min_dist_wall = min_dist_wall/ inner_radius;
+    %z_range = config.grid.Nz*(config.grid.dz*1e3) / inner_radius;
+    z_range =  2;
     attempts_radius = 0;
     max_attempts_radius = 1000;
     diameter_bubble = zeros(num_bubble);
@@ -118,6 +123,7 @@ function samples = gas_location_gen3d(num_bubble)
         while count < num_bubble && attempts < max_attempts
             cur_diameter_bubble = diameter_bubble(count+1);
             cur_min_dist = min_dist + cur_diameter_bubble/2;
+            cur_min_dist_wall = min_dist_wall + cur_diameter_bubble/2;
             % x, yはガウス分布、zは[-1,1]の一様分布からサンプリング
             xy = transpose(mvnrnd([0, 0], eye(2)./(cur_diameter_bubble*inner_radius), 1)); % 2x1ベクトル
             %xy = [2*rand-1; 2*rand-1];
@@ -126,7 +132,7 @@ function samples = gas_location_gen3d(num_bubble)
             % Check if (X,Y) is inside unit circle
                 % If this is the first sample, always accept
             if count ~= 0
-                if (candidate(1))^2 + (candidate(2))^2 <= (1-cur_min_dist)^2
+                if (candidate(1))^2 + (candidate(2))^2 <= (1-cur_min_dist_wall)^2
                     % Compute Euclidean distances to all previous samples
                     dists = -samples(4, 1:count)./2 + sqrt(sum((samples(1:3,1:count) - candidate(1:3)).^2, 1));
                     % Accept only if all distances are greater than or equal to min_dist
@@ -134,7 +140,7 @@ function samples = gas_location_gen3d(num_bubble)
                         count = count + 1;
                         samples(1:3, count) = candidate;
                         samples(4, count) = cur_diameter_bubble;
-                        samples(5, count) = cur_diameter_bubble;
+                        samples(5, count) = cur_diameter_bubble/(rand+1);
                         samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
                         cur_gas_fraction = cur_gas_fraction + samples(5, count)*cur_diameter_bubble^2/z_range/6;
                         attempts = 0;
@@ -172,7 +178,9 @@ function samples = gas_location_gen3d(num_bubble)
     
     % Save samples to CSV file
     csv_file = fullfile(save_path, 'sample.csv');
-    writematrix(samples', csv_file);
+    name = ["center x","center y","center z","major axis length","minor axis length","raw","pitch","yaw"];
+    T = array2table(transpose(samples), 'VariableNames', name);
+    writetable(T, csv_file);
 
     fprintf('Generated %d samples from 3D Gaussian distribution\n', num_bubble);
     fprintf('Samples saved to: %s\n', csv_file);
@@ -180,7 +188,11 @@ function samples = gas_location_gen3d(num_bubble)
     fprintf('Mean X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', mean(samples(1,:)), mean(samples(2,:)), mean(samples(3,:)), mean(samples(4,:)));
     fprintf('Std  X: %.4f, Y: %.4f, Z: %.4f, R: %.4f\n', std(samples(1,:)), std(samples(2,:)), std(samples(3,:)), std(samples(4,:)));
 
-    plot_gen(config_file, csv_file, 1, save_path);
+    save_path = config.location_seedfiles_path;
+    if ~exist(save_path, 'dir')
+        mkdir(save_path);
+    end
+    plot_gen3d_gl(config_file, csv_file, '1', save_path);
 
     % --- Plotting section: replicate the plots from tutorials/sampleplot.m ---
 

@@ -25,7 +25,7 @@ function samples = slug_location_gen3d(slug_length, slug_range)
 
     cur_gas_fraction = 0;
     inner_radius = config.pipe.inner_radius;
-    min_liquid_thickness = config.simulation.min_liquid_thickness;
+    min_liquid_thickness = config.simulation.min_dist_wall;
     min_liquid_thickness = min_liquid_thickness/inner_radius;
     slug_range = slug_range/inner_radius;
     z_range = config.grid.Nz*config.grid.dz / inner_radius*1e3;

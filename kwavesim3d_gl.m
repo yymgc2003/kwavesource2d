@@ -140,7 +140,8 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     % Initialize glass_mask
     bubble_mask = zeros(Nx, Ny, Nz);
     % Read coordinates from locationX.csv
-    location = csvread(location_csv);
+    location_df = readtable(location_csv);
+    location = table2array(location_df);
     
     if config.simulation.flow_pattern == "slug"
         %location: スラグの中心、スラグ長さ、楕円の累乗の値
