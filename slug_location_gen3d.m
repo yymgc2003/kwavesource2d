@@ -28,7 +28,10 @@ function samples = slug_location_gen3d(slug_length, slug_range)
     min_liquid_thickness = config.simulation.min_dist_wall;
     min_liquid_thickness = min_liquid_thickness/inner_radius;
     slug_range = slug_range/inner_radius;
-    z_range = config.grid.Nz*config.grid.dz / inner_radius*1e3;
+    slug_center = config.simulation.slug_center;
+    slug_center = slug_center/inner_radius;
+    %z_range = config.grid.Nz*config.grid.dz / inner_radius*1e3;
+    z_range = 2;
     slug_pow_num = config.simulation.slug_pow_num;
 
     major_axis_length = slug_length/inner_radius;
@@ -37,11 +40,18 @@ function samples = slug_location_gen3d(slug_length, slug_range)
     %ここで楕円の中心をどこに持ってくるか決める
     %上限は、円柱の下面と楕円の原点をそろえる場合か、slug_rangeの部分
     %下限は、円柱の中心面と楕円の頂点をそろえる場合
-    center_z = rand*( -slug_range + z_range/inner_radius/2);
+    %center_z = -rand*(major_axis_length - z_range/2) - z_range/2;
+    center_z = slug_center;
     samples = [center_z; major_axis_length; minor_axis_length; slug_pow_num];
 
     csv_file = fullfile(save_path, 'sample.csv');
-    sample_table = array2table(transpose(samples), 'VariableNames', {'CZ', 'MAJ_AXIS', 'MIN_AXIS', 'POW'});
+    sample_table = array2table(transpose(samples), 'VariableNames', {'center z', 'major axis', 'minor axis', 'power number'});
     writetable(sample_table, csv_file);
 
     fprintf('Samples saved to: %s\n', csv_file);
+
+    save_path = config.location_seedfiles_path;
+    if ~exist(save_path, 'dir')
+        mkdir(save_path);
+    end
+    plot_gen3d_gl(config_file, csv_file, '1', save_path);

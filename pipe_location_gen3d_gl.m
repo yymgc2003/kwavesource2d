@@ -1,4 +1,5 @@
 % --- Script to generate multiple location CSV files ---
+clearvars;
 addpath('..');
 config = jsondecode(fileread('config3d.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
@@ -6,12 +7,6 @@ num_bubble = config.simulation.num_bubble;
 slug_length = config.simulation.slug_length;
 slug_range = config.simulation.slug_range;
 for i = 1:num_repeat
-    if config.simulation.flow_pattern == "bubble"
-        samples = gas_location_gen3d(num_bubble);
-    end
-    if config.simulation.flow_pattern == "slug"
-        samples = slug_location_gen3d(slug_length, slug_range);
-    end
     config_file = 'config3d.json';
     if ~exist(config_file, 'file')
         error('Configuration file not found: %s', config_file);
@@ -22,9 +17,32 @@ for i = 1:num_repeat
         mkdir(save_path);
     end
     filename = fullfile(save_path, sprintf('location%d.csv', i));
-    name = ["center x","center y","center z","major axis length","minor axis length","raw","pitch","yaw"];
-    T = array2table(transpose(samples), 'VariableNames', name);
-    writetable(T, filename); % Save as CSV (transpose to get m rows)
+    if config.simulation.flow_pattern == "bubble"
+        samples = gas_location_gen3d(num_bubble);
+        name = ["center x","center y","center z","major axis length","minor axis length","raw","pitch","yaw"];
+        T = array2table(transpose(samples), 'VariableNames', name);
+        writetable(T, filename); % Save as CSV (transpose to get m rows)
+    end
+    if config.simulation.flow_pattern == "slug"
+        samples = slug_location_gen3d(slug_length, slug_range);
+        name = ["center z", "major axis", "minor axis", "power number"];
+        T = array2table(transpose(samples), 'VariableNames', name);
+        writetable(T, filename); % Save as CSV (transpose to get m rows)
+    end
+    if config.simulation.flow_pattern == "slug-bubble"
+        num_bubble = num_bubble/2;
+        samples_tuple = slugbubble_location_gen3d(num_bubble, slug_length, slug_range);
+        name = ["center x","center y","center z","major axis length","minor axis length","raw","pitch","yaw"];
+        samples = samples_tuple(1);
+        T = array2table(transpose(samples), 'VariableNames', name);
+        writetable(T, filename); % Save as CSV (transpose to get m rows)
+
+        filename = fullfile(save_path, sprintf('location_slug%d.csv', i));
+        samples = samples_tuple(2);
+        name = ["center z", "major axis", "minor axis", "power number"];
+        T = array2table(transpose(samples), 'VariableNames', name);
+        writetable(T, filename); % Save as CSV (transpose to get m rows)
+    end
 end
 % XY plane scatter plot with unit circle
 figure;

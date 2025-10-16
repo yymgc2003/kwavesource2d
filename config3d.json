@@ -13,21 +13,21 @@
             "density": 1000,
             "alpha_coeff": 0.002,
             "alpha_power": 2,
-            "BonA": 6
+            "BonA": 5
         },
         "vinyl": {
             "sound_speed": 2790,
             "density": 1400,
             "alpha_coeff": 0.448,
             "alpha_power": 2,
-            "BonA": 6
+            "BonA": 5
         },
         "glass": {
             "sound_speed": 5789,
             "density": 2240,
             "alpha_coeff": 0.017,
             "alpha_power": 2,
-            "BonA": 6
+            "BonA": 5
         },
         "air": {
             "sound_speed": 340,
@@ -83,7 +83,7 @@
         }
     },
     "simulation": {
-        "t_end": 0.1e-6,
+        "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
         "pml_size": 20,
@@ -98,8 +98,9 @@
         "min_diameter_bubble":1,
         "slug_range":30,
         "slug_length":60,
+        "slug_center":-30,
         "slug_pow_num":3,
-        "flow_pattern":"bubble",
+        "flow_pattern":"slug",
         "min_dist_wall":1
     },
     "save_path": "/mnt/yamaguchi/kwavesource_gl/rawdata",

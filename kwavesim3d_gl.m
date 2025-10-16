@@ -38,7 +38,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     medium.density = config.medium.water.density * ones(Nx, Ny, Nz);
     medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny, Nz);
     medium.alpha_power = config.medium.water.alpha_power;
-    medium.BonA = config.medium.water.BonA;
+    medium.BonA = config.medium.water.BonA * ones(Nx, Ny, Nz);
 
     % Create time array
     t_end = config.simulation.t_end;
@@ -134,6 +134,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
     medium.density(pipe_mask == 1) = config.medium.vinyl.density;
     medium.alpha_coeff(pipe_mask == 1) = config.medium.vinyl.alpha_coeff;
+    medium.BonA(pipe_mask == 1) = config.medium.vinyl.BonA;
 
     % Glass mask
 
@@ -145,7 +146,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     
     if config.simulation.flow_pattern == "slug"
         %location: スラグの中心、スラグ長さ、楕円の累乗の値
-        bz = round(location(1)*inner_r);
+        bz = round(location(1)*inner_r) + cz;
         major_axis_length = round(location(2)*inner_r);
         minor_axis_length = round(location(3)*inner_r);
         slug_pow_num = location(4);
@@ -153,7 +154,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
             pow_z_relative =abs((z-bz)/major_axis_length)^slug_pow_num;
             for x = cx-inner_r-1:cx+inner_r+1
                 for y = cy-inner_r-1:cy+inner_r+1
-                    pow_r_relative = (((x-cx)^2+(y-cy)^2)/minor_axis_length)^(slug_pow_num/2);
+                    pow_r_relative = (((x-cx)^2+(y-cy)^2)/minor_axis_length^2)^(slug_pow_num/2);
                     if pow_z_relative + pow_r_relative <= 1
                         bubble_mask(x, y, z) = 1;
                     end
@@ -161,9 +162,39 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
             end
         end
     end
-    else if config.simulation.flow_pattern == "bubble"
+    if config.simulation.flow_pattern == "bubble"
         radius_pts = round(config.simulation.glass_radius / dx);
 
+        % Place balls at each coordinate
+        for i = 1:size(location,1)
+            loc_seed = location(i,:);
+            bx = round(inner_r * loc_seed(1)) + cx;
+            by = round(inner_r * loc_seed(2)) + cy;
+            bz = round(inner_r * loc_seed(3)) + cz;
+            radius_pts = round(inner_r*loc_seed(4)/2);
+            if bz-radius_pts-1<Nz & bz+radius_pts+1>1
+                radius_pts_short = round(inner_r*loc_seed(5)/2);
+                %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
+                th1 = loc_seed(6); th2 = loc_seed(7); th3 = loc_seed(8);
+                roll = [1,0,0;0,cos(th1),-sin(th1);0,sin(th1),cos(th1)];
+                pitch =[cos(th2),0,sin(th2);0,1,0;-sin(th2),0,cos(th2)];
+                yaw =  [cos(th3),-sin(th3),0;sin(th3),cos(th3),0;0,0,1];
+                Q = roll*pitch*yaw;
+                for x=bx-radius_pts-1:bx+radius_pts+1
+                    for y=by-radius_pts-1:by+radius_pts+1
+                        for z=max(1,bz-radius_pts-1):min(Nz,bz+radius_pts+1)
+                            bubble_mask_relative = [x, y, z]-[bx, by, bz];
+                            if bubble_mask_relative*Q*diag([1/radius_pts^2,1/radius_pts^2,1/radius_pts_short^2])*transpose(Q)*transpose(bubble_mask_relative)<=1
+                                bubble_mask(x, y, z) = 1;
+                            end
+                        end
+                    end
+                end
+            end
+            fprintf('%d th sample generated\n', i);
+        end
+    end
+    if config.simulation.flow_pattern == "slug-bubble"
         % Place balls at each coordinate
         i=0;
         while i < size(location,1)
@@ -171,7 +202,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
             loc_seed = location(i,:);
             bx = round(inner_r * loc_seed(1)) + cx;
             by = round(inner_r * loc_seed(2)) + cy;
-            bz = round(inner_r * loc_seed(3));
+            bz = round(inner_r * loc_seed(3)) + cz;
             radius_pts = round(inner_r*loc_seed(4)/2);
             radius_pts_short = round(inner_r*loc_seed(5)/2);
             %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
@@ -197,6 +228,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     medium.sound_speed(bubble_mask == 1) = config.medium.air.sound_speed;
     medium.density(bubble_mask == 1) = config.medium.air.density;
     medium.alpha_coeff(bubble_mask == 1) = config.medium.air.alpha_coeff;
+    medium.BonA(bubble_mask == 1) = config.medium.air.BonA;
 
     % Run simulation
     display_mask = transducer_transmit.all_elements_mask | pipe_mask | bubble_mask;
