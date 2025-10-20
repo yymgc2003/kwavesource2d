@@ -1,4 +1,14 @@
-function kwavesim3d_gl(config_file, location_csv, locnum_str)
+config_file = 'config3d.json';
+config = jsondecode(fileread(config_file));
+location_dir = config.location_seedfiles_path;
+
+location_csv = fullfile(location_dir, 'location1.csv');
+
+locnum_str = '1';
+
+kwavesim3d_withmovie(config_file, location_csv, locnum_str);
+
+function kwavesim3d_withmovie(config_file, location_csv, locnum_str)
 % Main simulation logic for k-Wave, extracted for modular use.
 
     config = jsondecode(fileread(config_file));
@@ -235,7 +245,11 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     input_args = {'DisplayMask', display_mask, ...
         'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
         'DataCast', DATA_CAST, 'PlotScale', [-1/2, 1/2] * source_strength};
+
+    sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
     
+
+
     % Visualize and save experimental setup
     figure(21); clf;
     hold on;
@@ -288,20 +302,4 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     hold off;
 
     saveas(gcf, fullfile(save_logs_path, ['slug_experimental_setup' locnum_str '.png']));
-
-    sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
-    save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
-
-    % Plot and save signal waveform
-    scan_line = transducer_transmit.scan_line(sensor_data);
-    figure(1);
-    plot(kgrid.t_array * 1e6, scan_line * 1e-6, 'b-');
-    xlabel('Time [\mus]');
-    ylabel('Pressure [MPa]');
-    ylim([-2 2]);
-    title('Signal from Transducer transmit');
-    grid on;
-    saveas(gcf, fullfile(save_logs_path, ['signal_solid_liquid_reflector' locnum_str '.png']));
-
-    
 end 

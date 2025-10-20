@@ -137,10 +137,9 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
     rgb_img = ones(Ny, Ny, 3);
     rgb_img(:,:,:) = rgb_img(:,:,:) - 0.5 * pipe_mask(s_idx:e_idx, :, Nz/2);
     for i=1:2
-        rgb_img(:,:,i) = rgb_img(:,:,i) - bubble_mask(s_idx:e_idx, :, Nz/2);
+        rgb_img(:,:,i) = rgb_img(:,:,i) - permute(bubble_mask(s_idx:e_idx, :, Nz/2), [2 1 3]);
     end
     figure;
-    permute(rgb_img,[2 1 3]);
     imshow(rgb_img);
     axis tight;
     axis equal;

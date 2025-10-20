@@ -3,9 +3,9 @@
         "Nx": 2048,
         "Ny": 768,
         "Nz": 128,
-        "dx": 0.05e-3,
-        "dy": 0.05e-3,
-        "dz": 0.05e-3
+        "dx": 0.042e-3,
+        "dy": 0.042e-3,
+        "dz": 0.042e-3
     },
     "medium": {
         "water": {
@@ -30,7 +30,7 @@
             "BonA": 5
         },
         "air": {
-            "sound_speed": 340,
+            "sound_speed": 343,
             "density": 1.2,
             "alpha_coeff": 1.48,
             "alpha_power": 2,
@@ -64,7 +64,7 @@
         "tone_burst_cycles": 4
     },
     "pipe": {
-        "center_x": 1140,
+        "center_x": 1355,
         "center_y": 384,
         "center_z": 64,
         "outer_radius": 16,
@@ -91,16 +91,16 @@
         "CFL": 0.03,
         "num_dataset": 1,
         "num_particles": 0,
-        "num_bubble":360,
+        "num_bubble":2,
         "glass_radius": 1.25,
         "distance_particles":0.25,
         "distance_bubble":0.15,
         "min_diameter_bubble":1,
         "slug_range":30,
         "slug_length":60,
-        "slug_center":-30,
+        "slug_center":-40,
         "slug_pow_num":3,
-        "flow_pattern":"slug",
+        "flow_pattern":"bubble",
         "min_dist_wall":1
     },
     "save_path": "/mnt/yamaguchi/kwavesource_gl/rawdata",

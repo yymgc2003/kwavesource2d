@@ -124,7 +124,8 @@ function samples = gas_location_gen3d(num_bubble)
         diameter_bubble = zeros(num_bubble);
         
         while count < num_bubble
-            cur_diameter_bubble = random(pd)/inner_radius;
+            %cur_diameter_bubble = random(pd)/inner_radius;
+            cur_diameter_bubble = 1.5/inner_radius;
             if cur_diameter_bubble < 0.4 && cur_diameter_bubble> min_diameter_bubble
                 count = count+1;
                 diameter_bubble(count)=cur_diameter_bubble;
@@ -146,7 +147,13 @@ function samples = gas_location_gen3d(num_bubble)
             xy = transpose(mvnrnd([0, 0], eye(2)./(cur_diameter_bubble*inner_radius), 1)); % 2x1ベクトル
             %xy = [2*rand-1; 2*rand-1];
             z = (z_range - cur_diameter_bubble) * rand - z_range/2  + cur_diameter_bubble/2;   % zを[min_dist/2, 1-min_dist/2]の範囲で一様分布から生成
-            candidate = [xy; z];             % 3x1 vec
+            %candidate = [xy; z];            % 3x1 vec
+            if count == 0 
+                candidate = [0;0;0];
+            end
+            if count == 1
+                candidate = [0;0;10];
+            end
             % Check if (X,Y) is inside unit circle
                 % If this is the first sample, always accept
             if count ~= 0
@@ -158,7 +165,8 @@ function samples = gas_location_gen3d(num_bubble)
                         count = count + 1;
                         samples(1:3, count) = candidate;
                         samples(4, count) = cur_diameter_bubble;
-                        samples(5, count) = cur_diameter_bubble/(rand+1);
+                        %samples(5, count) = cur_diameter_bubble/(rand+1);
+                        samples(5, count) = cur_diameter_bubble;
                         samples(6:8, count) = [2*pi*rand, 2*pi*rand, 2*pi*rand];
                         cur_gas_fraction = cur_gas_fraction + samples(5, count)*cur_diameter_bubble^2/z_range/6;
                         attempts = 0;
