@@ -7,8 +7,8 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
 
     glass_radius = config.simulation.glass_radius;
 
-    Nx = config.grid.Nx;
-    Ny = config.grid.Ny; 
+    Nx = config.grid.Nx-40;
+    Ny = config.grid.Ny-20; 
     Nz_sim = config.grid.Nz;
     dx = config.grid.dx; dy = config.grid.dy; dz = config.grid.dz;
     cx = config.pipe.center_x;
@@ -93,7 +93,7 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
             bz = round(inner_r * loc_seed(3)) + Nz/2;
             radius_pts = round(inner_r*loc_seed(4)/2);
             if bz-radius_pts-1<Nz & bz+radius_pts+1>1
-                radius_pts_short = round(inner_r*loc_seed(5)/2);
+                radius_pts_short = round(inner_r*loc_seed(4)/2);
                 %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
                 th1 = loc_seed(6); th2 = loc_seed(7); th3 = loc_seed(8);
                 roll = [1,0,0;0,cos(th1),-sin(th1);0,sin(th1),cos(th1)];
@@ -115,7 +115,7 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
         location_df = readtable(location_csv(2));
         location = table2array(location_df);
         %location: スラグの中心、スラグ長さ、楕円の累乗の値
-        bz = round(location(1)*inner_r);
+        bz = round(location(1)*inner_r) + Nz/2;
         major_axis_length = round(location(2)*inner_r);
         minor_axis_length = round(location(3)*inner_r);
         slug_pow_num = location(4);
@@ -132,8 +132,8 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
         end
     end
     fprintf('Mask Finished.\n')
-    s_idx = cx - Ny/2 + 1;
-    e_idx = cx + Ny/2;
+    s_idx = cx - cy + 1;
+    e_idx = cx + cy;
     rgb_img = ones(Ny, Ny, 3);
     rgb_img(:,:,:) = rgb_img(:,:,:) - 0.5 * pipe_mask(s_idx:e_idx, :, Nz/2);
     for i=1:2
@@ -148,21 +148,21 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
     set(gca,'Units','normalized');
     set(gca,'Position',[0 0 1 1]);
     set(gcf, 'PaperPositionMode', 'auto');
-    saveas(gcf, fullfile(save_logs_path, ['experimental_setup' locnum_str '.png']));
+    saveas(gcf, fullfile(save_logs_path, ['experimental_setup_2D_' locnum_str '.png']));
 
 
-    s_idx = cx - Ny/2 + 1;
-    e_idx = cx + Ny/2;
+    s_idx = cx - cy + 1;
+    e_idx = cx + cy;
     rgb_img = ones(Ny, Ny, 3);
-    s_idx_z = (Ny - Nz)/2 + 1;
-    e_idx_z = (Ny + Nz)/2;
+    s_idx_z = cy - Nz/2 + 1;
+    e_idx_z = cy + Nz/2;
     rgb_img(s_idx_z:e_idx_z,:,:) = rgb_img(s_idx_z:e_idx_z,:,:) - 0.5 * permute(pipe_mask(s_idx:e_idx, cy, :),[3 1 2]);
     for i=1:2
         rgb_img(s_idx_z:e_idx_z,:,i) = rgb_img(s_idx_z:e_idx_z,:,i) - permute(bubble_mask(s_idx:e_idx, cy, :), [3 1 2]);
-    rgb_img((Ny-Nz_sim)/2+1:(Ny+Nz_sim)/2,1:6,:) = 0;
-    rgb_img((Ny-Nz_sim)/2+1:(Ny+Nz_sim)/2,Ny-5:Ny,:) = 0;
-    rgb_img((Ny-Nz_sim)/2-4:(Ny-Nz_sim)/2+1,:,:) = 0;
-    rgb_img((Ny+Nz_sim)/2:(Ny+Nz_sim)/2+5,:,:) = 0;
+    rgb_img(cy-cz+1:cy+cz,1:6,:) = 0;
+    rgb_img(cy-cz+1:cy+cz,Ny-5:Ny,:) = 0;
+    rgb_img(cy-cz-4:cy-cz+1,:,:) = 0;
+    rgb_img(cy+cz:cy+cz+5,:,:) = 0;
 
     end
     figure;
@@ -174,5 +174,5 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
     set(gca,'Units','normalized');
     set(gca,'Position',[0 0 1 1]);
     set(gcf, 'PaperPositionMode', 'auto');
-    saveas(gcf, fullfile(save_logs_path, ['experimental_setup_vertical' locnum_str '.png']));
+    saveas(gcf, fullfile(save_logs_path, ['experimental_setup_2D_vertical' locnum_str '.png']));
 end
