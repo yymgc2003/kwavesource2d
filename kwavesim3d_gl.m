@@ -42,7 +42,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
 
     % Create time array
     t_end = config.simulation.t_end;
-    cfl = config.simulation.CFL;
+    cfl = config.simulation.CFL*5/8.4;
     kgrid.makeTime(medium.sound_speed, cfl, t_end);
 
     % Input signal properties
@@ -50,20 +50,28 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     tone_burst_freq = config.source.tone_burst_freq;
     tone_burst_cycles = config.source.tone_burst_cycles;
 
+    cx = round(config.pipe.center_x/dx*1e-3) + 10;
+    cy = round(config.pipe.center_y/dy*1e-3) + Ny/2;
+    cz = round(config.pipe.center_z/dz*1e-3) + Nz/2;
+
     % Generate input signal
     % Read upsampled pulse from mat file
     % original_pulse = load('/home/matsubara/Scripts/kwavesource/src/pulse_4000_upsampled.mat');
     %input_signal = original_pulse.pulse_upsampled;
     
-    input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles);
+    input_signal = toneBurst(1/kgrid.dt, tone_burst_freq, tone_burst_cycles, "Envelope", [2, 2]);
 
     % Scale by impedance
     input_signal = (source_strength / (config.medium.water.sound_speed * config.medium.water.density)) * input_signal(1:end-10);
     fprintf('input_signal: %f\n', size(input_signal));
     % Define transmit transducer
-    transducer_transmit.number_elements = config.transducer.elements;
+    % transducer_transmit.number_elements = config.transducer.elements;
+    % transducer_transmit.element_width = config.transducer.element_width;
+    % transducer_transmit.element_length = config.transducer.element_length;
+    % transducer_transmit.element_spacing = config.transducer.element_spacing;
+    transducer_transmit.number_elements = round(9e-3/dy);
     transducer_transmit.element_width = config.transducer.element_width;
-    transducer_transmit.element_length = config.transducer.element_length;
+    transducer_transmit.element_length = round(0.3e-3/dz);
     transducer_transmit.element_spacing = config.transducer.element_spacing;
     transducer_transmit.radius = inf;
 
@@ -72,7 +80,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
         + (transducer_transmit.number_elements - 1) * transducer_transmit.element_spacing;
 
     % Position
-    transducer_transmit.position = round([10, Ny/2 - transducer_transmit_width/2, Nz/2 - transducer_transmit.element_length/2]);
+    transducer_transmit.position = round([10, cy - transducer_transmit_width/2, cz - transducer_transmit.element_length/2]);
 
     % Beamforming properties
     transducer_transmit.sound_speed = config.transducer.sound_speed;
@@ -86,7 +94,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
 
     % Active elements
     transducer_transmit.active_elements = zeros(transducer_transmit.number_elements, 1);
-    transducer_transmit.active_elements(41:141) = 1;
+    transducer_transmit.active_elements(round(transducer_transmit.number_elements*2/9):round(transducer_transmit.number_elements*7/9)) = 1;
 
     % Input signal
     transducer_transmit.input_signal = input_signal;
@@ -119,9 +127,6 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     % Sensor mask
     sensor.mask = zeros(Nx, Ny, Nz);
     sensor.mask([Nx/4, Nx/2, 3*Nx/4], Ny/2, Nz/2) = 1;
-    cx = config.pipe.center_x;
-    cy = config.pipe.center_y;
-    cz = config.pipe.center_z;
     outer_r_mm = config.pipe.outer_radius;
     inner_r_mm = config.pipe.inner_radius;
     outer_r = round((outer_r_mm * 1e-3) / dx);
@@ -289,7 +294,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
 
     saveas(gcf, fullfile(save_logs_path, ['slug_experimental_setup' locnum_str '.png']));
 
-    sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
+    sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
     save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
 
     % Plot and save signal waveform

@@ -35,9 +35,55 @@ function kwavesim(config_file, location_csv, locnum_str, ...
     % Medium properties
     medium.sound_speed = config.medium.water.sound_speed * ones(Nx, Ny);
     medium.density = config.medium.water.density * ones(Nx, Ny);
-    medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny);
+    medium.alpha_coeff = config.medium.water.alpha_coeff * ones(Nx, Ny);% [dB/(MHz^y cm)]
     medium.alpha_power = config.medium.water.alpha_power;
     medium.BonA = config.medium.water.BonA * ones(Nx, Ny);
+
+    % Pipe mask
+    cx = round(config.pipe.center_x/dx);
+    cy = round(config.pipe.center_y/dy);
+    outer_r = round(config.pipe.outer_radius/dx);
+    inner_r = round(config.pipe.inner_radius/dy);
+    [Xg, Yg] = ndgrid(1:Nx, 1:Ny);
+    ring2d = sqrt((Xg-cx-Nx/2).^2 + (Yg-cy-Ny/2).^2);
+    ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);
+
+    pipe_mask = repmat(ringMask, [1 1]);
+    medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
+    medium.density(pipe_mask == 1) = config.medium.vinyl.density;
+    medium.alpha_coeff(pipe_mask == 1) = config.medium.vinyl.alpha_coeff;
+    medium.BonA(pipe_mask == 1) = config.medium.vinyl.BonA;
+
+    % Glass mask
+    % Read coordinates from locationX.csv
+    location = csvread(location_csv);
+    glass_radius = config.simulation.glass_radius;
+    glass_radius_pts = round(glass_radius/dx);
+
+    % Initialize glass_mask
+    glass_mask = zeros(Nx, Ny);
+
+    % Place balls at each coordinate
+    % 三次元ではz方向が0.05*128=6.4mmだった。
+    % そのため、location(3)は-1:1を-3.2mm:3.2mmに変換
+    % 0mm部分で断面を取り、その形状を考える
+    for i = 1:size(location,1)
+        loc_seed = location(i,:);
+        bx = round(inner_r * loc_seed(2)) + cx + Nx/2;
+        by = round(inner_r * loc_seed(1)) + cy + Ny/2;
+        glass_radius_2d = glass_radius^2 - (inner_r*(0.5-loc_seed(3)))^2;
+        if glass_radius_2d>0
+            glass_radius_2d = sqrt(glass_radius_2d);
+            glass_radius_2d_pts = round(glass_radius_2d/dx);
+            %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
+            glass_mask = glass_mask | makeDisc(Nx, Ny, bx, by, glass_radius_2d_pts);
+        end
+    end
+    %glass_mask = zeros(Nx, Ny, Nz); %check validity for liquid only setting
+    medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
+    medium.density(glass_mask == 1) = config.medium.glass.density;
+    medium.alpha_coeff(glass_mask == 1) = config.medium.glass.alpha_coeff;
+    medium.BonA(glass_mask == 1) = config.medium.glass.BonA;
 
     % Create time array
     t_end = config.simulation.t_end;
@@ -77,50 +123,6 @@ function kwavesim(config_file, location_csv, locnum_str, ...
         Ny/2+dist_pipe_source) = 1;
     sensor.record = {'p'};
 
-    % Pipe mask
-    cx = round(config.pipe.center_x/dx);
-    cy = round(config.pipe.center_y/dy);
-    outer_r = round(config.pipe.outer_radius/dx);
-    inner_r = round(config.pipe.inner_radius/dy);
-    [Xg, Yg] = ndgrid(1:Nx, 1:Ny);
-    ring2d = sqrt((Xg-cx-Nx/2).^2 + (Yg-cy-Ny/2).^2);
-    ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);
-
-    pipe_mask = repmat(ringMask, [1 1]);
-    medium.sound_speed(pipe_mask == 1) = config.medium.vinyl.sound_speed;
-    medium.density(pipe_mask == 1) = config.medium.vinyl.density;
-    medium.alpha_coeff(pipe_mask == 1) = config.medium.vinyl.alpha_coeff;
-    medium.BonA(pipe_mask == 1) = config.medium.vinyl.BonA;
-
-    % Glass mask
-    % Read coordinates from locationX.csv
-    location = csvread(location_csv);
-    glass_radius = config.simulation.glass_radius;
-
-    % Initialize glass_mask
-    glass_mask = zeros(Nx, Ny);
-
-    % Place balls at each coordinate
-    % 三次元ではz方向が0.05*128=6.4mmだった。
-    % そのため、location(3)は-1:1を-3.2mm:3.2mmに変換
-    % 0mm部分で断面を取り、その形状を考える
-    for i = 1:size(location,1)
-        loc_seed = location(i,:);
-        bx = round(inner_r * loc_seed(2)) + cx + Nx/2;
-        by = round(inner_r * loc_seed(1)) + cy + Ny/2;
-        glass_radius_2d = glass_radius^2 - (Nz*dz*(0.5-loc_seed(3)))^2;
-        if glass_radius_2d>0
-            glass_radius_2d = sqrt(glass_radius_2d);
-            glass_radius_2d_pts = round(glass_radius_2d/dx);
-            %fprintf('bx: %d, by: %d, bz: %d\n', bx, by, bz);
-            glass_mask = glass_mask | makeDisc(Nx, Ny, bx, by, glass_radius_2d_pts);
-        end
-    end
-    %glass_mask = zeros(Nx, Ny, Nz); %check validity for liquid only setting
-    medium.sound_speed(glass_mask == 1) = config.medium.glass.sound_speed;
-    medium.density(glass_mask == 1) = config.medium.glass.density;
-    medium.alpha_coeff(glass_mask == 1) = config.medium.glass.alpha_coeff;
-    medium.BonA(glass_mask == 1) = config.medium.glass.BonA;
 
     figure;
     hold on;
@@ -128,7 +130,7 @@ function kwavesim(config_file, location_csv, locnum_str, ...
         loc_seed = location(i,:);
         loc_seed(1) = config.pipe.inner_radius * loc_seed(1);
         loc_seed(2) = config.pipe.inner_radius * loc_seed(2);
-        glass_radius_2d = glass_radius^2 - (Nz*dz*(0.5-loc_seed(3)))^2;
+        glass_radius_2d = glass_radius^2 - (config.pipe.inner_radius*(0.5-loc_seed(3)))^2;
         if glass_radius_2d>0
             glass_radius_2d = sqrt(glass_radius_2d);
             rectangle('Position',[loc_seed(1)-glass_radius_2d,...

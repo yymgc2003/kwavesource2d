@@ -1,0 +1,128 @@
+{
+    "grid": {
+        "Nx": 2592,
+        "Ny": 1728,
+        "dx": 0.02e-3,
+        "dy": 0.02e-3
+    },
+    "medium": {
+        "water": {
+            "sound_speed": 1500,
+            "sound_speed_shear": 0,
+            "density": 1000,
+            "alpha_coeff": 0.002,
+            "alpha_power": 2,
+            "BonA": 5
+        },
+        "vinyl": {
+            "sound_speed": 2790,
+            "density": 1400,
+            "alpha_coeff": 0.448,
+            "alpha_power": 2,
+            "BonA": 5
+        },
+        "PMMA": {
+            "sound_speed": 2750,
+            "density": 1192,
+            "alpha_coeff": 0.070,
+            "alpha_power": 2,
+            "BonA": 5
+        },
+        "glass": {
+            "sound_speed": 5789,
+            "sound_speed_shear": 3800,
+            "density": 2240,
+            "alpha_coeff": 0.017,
+            "alpha_power": 2,
+            "BonA": 5
+        },
+        "air": {
+            "sound_speed": 343,
+            "density": 1.2,
+            "alpha_coeff": 1.48,
+            "alpha_power": 2,
+            "BonA": 0.4
+        }
+    },
+    "transducer1": {
+        "type": "arc",
+        "radius": "inf",
+        "diameter": 0.005,
+        "focus_distance": 25e-3,
+        "steering_angle": 0,
+        "tone_burst_freq": 4e6,
+        "tone_burst_cycles": 4,
+        "pressure": 4e5
+    },
+    "source": {
+        "distance_pipe_source": 0.0565,
+        "diameter": 0.005,
+        "tone_burst_freq": 4e6,
+        "magnitude": 1,
+        "source_strength":1e6,
+        "pulse_length": 0.25e-6,
+        "max_n": 1000,
+        "tone_burst_cycles": 4
+    },
+    "pipe": {
+        "distance_tdx": 32e-3,
+        "outer_radius": 16e-3,
+        "inner_radius": 13e-3
+    },
+    "sensor": {
+        "x_offset": 0,
+        "y_offset": 0,
+        "z_offset": 0,
+        "type": "point",
+        "array": {
+            "elements": 128,
+            "pitch": 0.0005,
+            "width": 0.0005,
+            "height": 0.01
+        }
+    },
+    "bubble":{
+        "diameter": 1.5e-3,
+        "min_diameter": 0.98e-3,
+        "max_diameter": 6e-3,
+        "k_gamma": 11,
+        "theta_gamma": 0.2,
+        "slug_max_diameter": 17e-3,
+        "slug_min_diameter": 13e-3,
+        "annular_max_diameter": 24e-3,
+        "annular_min_diameter": 22e-3,
+        "distance": 0.3e-3,
+        "distance_wall": 0.3e-3,
+        "num_particles": 0,
+        "flow_pattern": "bubble"
+    },
+    "glass":{
+        "diameter": 2.5e-3,
+        "distance": 0.3e-3,
+        "num_particles": 0
+    },
+    "simulation": {
+        "t_end": 80e-6,
+        "data_cast": "gpuArray-single",
+        "dimension": 2,
+        "pml_size": [20, 20],
+        "pml_alpha": 2,
+        "CFL": 0.03,
+        "num_dataset": 1,
+        "num_particles": 0,
+        "num_bubble":100,
+        "glass_radius": 1.25e-3,
+        "distance_particles":0.25e-3,
+        "distance_bubble":0.15e-3,
+        "min_diameter_bubble":0.99e-3,
+        "slug_range":30e-3,
+        "slug_length":60e-3,
+        "slug_center":-40e-3,
+        "slug_pow_num":3,
+        "flow_pattern":"bubble",
+        "min_dist_wall":1e-3
+    },
+    "save_data_path":"/mnt/sdb/yyamaguchi/simulationB4/data",
+    "save_pic_path":"/mnt/sdb/yyamaguchi/simulationB4/pic",
+    "save_path":"/mnt/sdb/yyamaguchi/simulationB4"
+}

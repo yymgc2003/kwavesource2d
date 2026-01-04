@@ -1,11 +1,11 @@
 {
     "grid": {
-        "Nx": 960,
-        "Ny": 400,
-        "Nz": 64,
-        "dx": 0.084e-3,
-        "dy": 0.084e-3,
-        "dz": 0.084e-3
+        "Nx": 1800,
+        "Ny": 800,
+        "Nz": 128,
+        "dx": 0.042e-3,
+        "dy": 0.042e-3,
+        "dz": 0.042e-3
     },
     "medium": {
         "water": {
@@ -22,6 +22,13 @@
             "alpha_power": 2,
             "BonA": 5
         },
+        "PMMA": {
+            "sound_speed": 2750,
+            "density": 1192,
+            "alpha_coeff": 0.070,
+            "alpha_power": 2,
+            "BonA": 5
+        },
         "glass": {
             "sound_speed": 5789,
             "density": 2240,
@@ -34,7 +41,7 @@
             "density": 1.2,
             "alpha_coeff": 1.48,
             "alpha_power": 2,
-            "BonA": 0.4
+            "BonA": 0
         }
     },
     "transducer": {
@@ -44,9 +51,9 @@
         "focus": [0, 0, 0],
         "position": [10, 979, 19],
         "rotation": [0, 0, 0],
-        "elements": 107,
+        "elements": 180,
         "element_width": 1,
-        "element_length": 7,
+        "element_length": 12,
         "element_spacing": 0,
         "sound_speed": 1540,
         "focus_distance": 20e-3,
@@ -54,25 +61,25 @@
         "steering_angle": 0
     },
     "source": {
-        "distance_pipe_source": 0.05,
-        "diameter": 0.009,
+        "distance_pipe_source": 0.0565,
+        "diameter": 0.005,
         "tone_burst_freq": 4e6,
         "magnitude": 1,
         "source_strength":1e6,
         "pulse_length": 0.25e-6,
         "max_n": 1000,
-        "tone_burst_cycles": 6
+        "tone_burst_cycles": 4
     },
     "pipe": {
-        "center_x": 56.5,
+        "center_x": 56e-3,
         "center_y": 0,
         "center_z": 0,
-        "outer_radius": 16,
-        "inner_radius": 13
+        "outer_radius": 16e-3,
+        "inner_radius": 13e-3
     },
     "sensor": {
         "x_offset": 0,
-        "y_offset": 400,
+        "y_offset": 0,
         "z_offset": 0,
         "type": "point",
         "array": {
@@ -86,26 +93,34 @@
         "t_end": 100e-6,
         "data_cast": "gpuArray-single",
         "dimension": 2,
-        "pml_size": 20,
+        "pml_size": [20, 10],
         "pml_alpha": 2,
-        "CFL": 0.03,
+        "CFL": 0.05,
         "num_dataset": 1,
         "num_particles": 0,
-        "num_bubble":2,
-        "glass_radius": 1.25,
-        "distance_particles":0.25,
-        "distance_bubble":0.15,
-        "min_diameter_bubble":0.99,
-        "slug_range":30,
-        "slug_length":60,
-        "slug_center":-40,
+        "num_bubble":50,
+        "glass_radius": 1.25e-3,
+        "distance_particles":0.25e-3,
+        "distance_bubble":0.15e-3,
+        "min_diameter_bubble":0.99e-3,
+        "slug_range":30e-3,
+        "slug_length":60e-3,
+        "slug_center":-40e-3,
         "slug_pow_num":3,
         "flow_pattern":"bubble",
-        "min_dist_wall":1
+        "min_dist_wall":1e-3
     },
-    "save_path": "/mnt/sdb/yyamaguchi/kwavesource3d/rawdata",
-    "location_seedfiles_path": "/mnt/sdb/yyamaguchi/kwavesource3d/location_seed",
-    "save_logs_path": "/mnt/sdb/yyamaguchi/kwavesource3d/logs",
-    "save_data_path": "/mnt/sdb/yyamaguchi/kwavesource3d/signals_sim",
-    "save_full_path":"/mnt/sdb/yyamaguchi/kwavesource3d/tmp"
+    "save_path": "/mnt/sdb/yyamaguchi/kwavesource2d/csv",
+    "location_seedfiles_path": "/mnt/sdb/yyamaguchi/kwavesource2d/location_seed",
+    "location_seedfiles_path1": "/mnt/sdb/yyamaguchi/kwavesource2d/location_seed1",
+    "location_seedfiles_path2": "/mnt/sdb/yyamaguchi/kwavesource2d/location_seed2",
+    "save_logs_path": "/mnt/sdb/yyamaguchi/kwavesource2d/logs",
+    "save_logs_path1": "/mnt/sdb/yyamaguchi/kwavesource2d/logs1",
+    "save_logs_path2": "/mnt/sdb/yyamaguchi/kwavesource2d/logs2",
+    "save_data_path": "/mnt/sdb/yyamaguchi/kwavesource2d/signals_sim",
+    "save_data_path1": "/mnt/sdb/yyamaguchi/kwavesource2d/signals_sim1",
+    "save_data_path2": "/mnt/sdb/yyamaguchi/kwavesource2d/signals_sim2",
+    "save_full_path":"/mnt/sdb/yyamaguchi/kwavesource2d/tmp",
+    "save_full_path1":"/mnt/sdb/yyamaguchi/kwavesource2d/tmp1",
+    "save_full_path2":"/mnt/sdb/yyamaguchi/kwavesource2d/tmp2"
 } 

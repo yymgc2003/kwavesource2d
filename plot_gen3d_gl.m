@@ -11,9 +11,9 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
     Ny = config.grid.Ny; 
     Nz_sim = config.grid.Nz;
     dx = config.grid.dx; dy = config.grid.dy; dz = config.grid.dz;
-    cx = config.pipe.center_x;
-    cy = config.pipe.center_y;
-    cz = config.pipe.center_z;
+    cx = round(config.pipe.center_x/dx*1e-3) + 10;
+    cy = round(config.pipe.center_y/dy*1e-3) + Ny/2;
+    cz = round(config.pipe.center_z/dz*1e-3) + Nz_sim/2;
     outer_r_mm = config.pipe.outer_radius;
     inner_r_mm = config.pipe.inner_radius;
     outer_r = round((outer_r_mm * 1e-3) / dx);
@@ -24,6 +24,10 @@ function plot_gen3d_gl(config_file, location_csv, locnum_str, ...
     ringMask = (ring2d <= outer_r) & (ring2d >= inner_r);
 
     pipe_mask = repmat(ringMask, [1 1 Nz]);
+
+    disp(Nx);
+    disp(Ny);
+    disp(Nz);
 
     bubble_mask = zeros(Nx, Ny, Nz);
 

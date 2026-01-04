@@ -1,5 +1,6 @@
 % --- Script to generate multiple location CSV files ---
 clearvars;
+close all;
 addpath('..');
 config = jsondecode(fileread('config3d.json'));
 num_repeat = config.simulation.num_dataset; % Number of times to repeat
@@ -125,7 +126,7 @@ function samples = gas_location_gen3d(num_bubble)
         
         while count < num_bubble
             %cur_diameter_bubble = random(pd)/inner_radius;
-            cur_diameter_bubble = 1.5/inner_radius;
+            cur_diameter_bubble = 1/inner_radius;
             if cur_diameter_bubble < 0.4 && cur_diameter_bubble> min_diameter_bubble
                 count = count+1;
                 diameter_bubble(count)=cur_diameter_bubble;
