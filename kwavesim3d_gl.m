@@ -42,7 +42,7 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
 
     % Create time array
     t_end = config.simulation.t_end;
-    cfl = config.simulation.CFL*5/8.4;
+    cfl = config.simulation.CFL*5/4.2;
     kgrid.makeTime(medium.sound_speed, cfl, t_end);
 
     % Input signal properties
@@ -241,6 +241,9 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
         'PMLInside', false, 'PlotPML', false, 'PMLSize', [PML_X_SIZE, PML_Y_SIZE, PML_Z_SIZE], ...
         'DataCast', DATA_CAST, 'PlotScale', [-1/2, 1/2] * source_strength};
     
+    sensor_data = kspaceFirstOrder3DG(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
+    save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
+
     % Visualize and save experimental setup
     figure(21); clf;
     hold on;
@@ -293,9 +296,6 @@ function kwavesim3d_gl(config_file, location_csv, locnum_str)
     hold off;
 
     saveas(gcf, fullfile(save_logs_path, ['slug_experimental_setup' locnum_str '.png']));
-
-    sensor_data = kspaceFirstOrder3D(kgrid, medium, transducer_transmit, transducer_transmit, input_args{:});
-    save(fullfile(save_data_path, ['solid_liquid_reflector' locnum_str '.mat']), 'sensor_data', 'kgrid', '-v7.3');
 
     % Plot and save signal waveform
     scan_line = transducer_transmit.scan_line(sensor_data);

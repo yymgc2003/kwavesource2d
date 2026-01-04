@@ -1,11 +1,11 @@
 {
     "grid": {
-        "Nx": 960,
-        "Ny": 400,
-        "Nz": 64,
-        "dx": 0.084e-3,
-        "dy": 0.084e-3,
-        "dz": 0.084e-3
+        "Nx": 1800,
+        "Ny": 800,
+        "Nz": 128,
+        "dx": 0.042e-3,
+        "dy": 0.042e-3,
+        "dz": 0.042e-3
     },
     "medium": {
         "water": {
@@ -19,6 +19,13 @@
             "sound_speed": 2790,
             "density": 1400,
             "alpha_coeff": 0.448,
+            "alpha_power": 2,
+            "BonA": 5
+        },
+        "PMMA": {
+            "sound_speed": 2750,
+            "density": 1192,
+            "alpha_coeff": 0.070,
             "alpha_power": 2,
             "BonA": 5
         },
@@ -44,9 +51,9 @@
         "focus": [0, 0, 0],
         "position": [10, 979, 19],
         "rotation": [0, 0, 0],
-        "elements": 107,
+        "elements": 214,
         "element_width": 1,
-        "element_length": 7,
+        "element_length": 14,
         "element_spacing": 0,
         "sound_speed": 1540,
         "focus_distance": 20e-3,
@@ -91,7 +98,7 @@
         "CFL": 0.03,
         "num_dataset": 1,
         "num_particles": 0,
-        "num_bubble":2,
+        "num_bubble":800,
         "glass_radius": 1.25,
         "distance_particles":0.25,
         "distance_bubble":0.15,
